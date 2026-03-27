@@ -31,13 +31,18 @@ public class CheckMBean {
             jmxClient.connect();
 
             try {
-                Checker checker = createChecker(parser, jmxClient);
-                long startTime = System.nanoTime();
-                NaemonOutput output = checker.check();
-                double execTimeSeconds = (System.nanoTime() - startTime) / 1_000_000_000.0;
-                output.addExecTime(execTimeSeconds);
-                System.out.println(output.build());
-                System.exit(output.getStatus().getExitCode());
+                if ("fetch".equalsIgnoreCase(parser.getMode())) {
+                    String value = fetchValue(parser, jmxClient);
+                    System.out.println(value);
+                } else {
+                    Checker checker = createChecker(parser, jmxClient);
+                    long startTime = System.nanoTime();
+                    NaemonOutput output = checker.check();
+                    double execTimeSeconds = (System.nanoTime() - startTime) / 1_000_000_000.0;
+                    output.addExecTime(execTimeSeconds);
+                    System.out.println(output.build());
+                    System.exit(output.getStatus().getExitCode());
+                }
             } finally {
                 jmxClient.close();
             }
@@ -125,6 +130,19 @@ public class CheckMBean {
             if (handler instanceof ConsoleHandler) {
                 handler.setLevel(level);
             }
+        }
+    }
+
+    private static String fetchValue(CliParser parser, JmxClient jmxClient) {
+        try {
+            var objectName = new javax.management.ObjectName(parser.getObjectName());
+            var valueOpt = jmxClient.getAttribute(objectName, parser.getAttribute(), parser.getPath());
+            if (valueOpt.isEmpty()) {
+                throw new IllegalStateException("Could not retrieve attribute: " + parser.getAttribute());
+            }
+            return String.valueOf(valueOpt.get());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch value: " + e.getMessage(), e);
         }
     }
 }

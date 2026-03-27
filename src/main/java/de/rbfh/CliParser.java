@@ -61,7 +61,7 @@ public class CliParser {
                 .longOpt("mode")
                 .hasArg()
                 .argName("MODE")
-                .desc("Monitoring mode: gauge, rate, string (default: gauge)")
+                .desc("Monitoring mode: gauge, rate, string, fetch (default: gauge)")
                 .build());
 
         opts.addOption(Option.builder()
