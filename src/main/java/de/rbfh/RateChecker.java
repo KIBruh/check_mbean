@@ -159,7 +159,7 @@ public class RateChecker implements Checker {
                 attributeLabel + " has a rate of " + formattedRate + "/min (rate window " + rateWindowSeconds + "s)");
 
             output.addPerfData(attributeLabel, (long) currentValue, "c", null, null);
-            output.addPerfData(attributeLabel + ".rate", rate, "/min", warningThreshold, criticalThreshold);
+            output.addPerfData(attributeLabel + ".rate", rate, "", warningThreshold, criticalThreshold);
 
             return output;
 
