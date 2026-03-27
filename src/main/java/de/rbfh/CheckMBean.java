@@ -1,6 +1,7 @@
 package de.rbfh;
 
 import org.apache.commons.cli.ParseException;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -8,6 +9,8 @@ public class CheckMBean {
     private static final Logger logger = Logger.getLogger(CheckMBean.class.getName());
 
     public static void main(String[] args) {
+        configureLogging();
+
         try {
             CliParser parser = new CliParser(args);
 
@@ -80,5 +83,17 @@ public class CheckMBean {
             case "string" -> new StringChecker(config);
             default -> throw new IllegalArgumentException("Unknown mode: " + mode);
         };
+    }
+
+    private static void configureLogging() {
+        String logLevel = System.getProperty("de.rbfh.log.level", "SEVERE");
+        Level level = Level.parse(logLevel.toUpperCase());
+
+        Logger rootLogger = Logger.getLogger("");
+        for (java.util.logging.Handler handler : rootLogger.getHandlers()) {
+            if (handler instanceof ConsoleHandler) {
+                handler.setLevel(level);
+            }
+        }
     }
 }
