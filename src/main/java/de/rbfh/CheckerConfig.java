@@ -14,7 +14,9 @@ record CheckerConfig(
     Threshold warningThreshold,
     Threshold criticalThreshold,
     String warningRegex,
-    String criticalRegex
+    String criticalRegex,
+    boolean warningNegated,
+    boolean criticalNegated
 ) {
     public ObjectName objectNameAsObjectName() {
         try {

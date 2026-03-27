@@ -34,15 +34,17 @@ public class StringChecker implements Checker {
 
             if (config.criticalRegex() != null && !config.criticalRegex().isEmpty()) {
                 try {
-                    criticalMatch = Pattern.compile(config.criticalRegex()).matcher(value).find();
+                    boolean matched = Pattern.compile(config.criticalRegex()).matcher(value).find();
+                    criticalMatch = config.criticalNegated() ? !matched : matched;
                 } catch (PatternSyntaxException e) {
                     return NaemonOutput.unknown("Invalid critical regex: " + e.getMessage());
                 }
             }
 
-            if (!criticalMatch && config.warningRegex() != null && !config.warningRegex().isEmpty()) {
+            if (config.warningRegex() != null && !config.warningRegex().isEmpty()) {
                 try {
-                    warningMatch = Pattern.compile(config.warningRegex()).matcher(value).find();
+                    boolean matched = Pattern.compile(config.warningRegex()).matcher(value).find();
+                    warningMatch = config.warningNegated() ? !matched : matched;
                 } catch (PatternSyntaxException e) {
                     return NaemonOutput.unknown("Invalid warning regex: " + e.getMessage());
                 }
