@@ -2,20 +2,7 @@ package de.rbfh;
 
 import java.util.Objects;
 
-public class Range {
-    private final double start;
-    private final double end;
-    private final boolean invert;
-    private final boolean startInclusive;
-    private final boolean endInclusive;
-
-    Range(double start, double end, boolean invert, boolean startInclusive, boolean endInclusive) {
-        this.start = start;
-        this.end = end;
-        this.invert = invert;
-        this.startInclusive = startInclusive;
-        this.endInclusive = endInclusive;
-    }
+public record Range(double start, double end, boolean invert, boolean startInclusive, boolean endInclusive) {
 
     public static Range parse(String rangeStr) {
         Objects.requireNonNull(rangeStr, "Range string cannot be null");
@@ -53,7 +40,6 @@ public class Range {
         } else {
             start = 0;
             end = parseEnd(parsed);
-            startInclusive = true;
         }
 
         if (start > end) {
@@ -78,49 +64,29 @@ public class Range {
     }
 
     public boolean isInRange(double value) {
-        boolean aboveStart = startInclusive ? value >= start : value > start;
-        boolean belowEnd = endInclusive ? value <= end : value < end;
+        boolean aboveStart = startInclusive() ? value >= start() : value > start();
+        boolean belowEnd = endInclusive() ? value <= end() : value < end();
         boolean inside = aboveStart && belowEnd;
 
-        return invert ? !inside : inside;
-    }
-
-    public double getStart() {
-        return start;
-    }
-
-    public double getEnd() {
-        return end;
-    }
-
-    public boolean isInvert() {
-        return invert;
-    }
-
-    public boolean isStartInclusive() {
-        return startInclusive;
-    }
-
-    public boolean isEndInclusive() {
-        return endInclusive;
+        return invert() ? !inside : inside;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (invert) {
+        if (invert()) {
             sb.append("@");
         }
-        if (start == Double.NEGATIVE_INFINITY) {
+        if (start() == Double.NEGATIVE_INFINITY) {
             sb.append("~");
         } else {
-            sb.append(formatNumber(start));
+            sb.append(formatNumber(start()));
         }
         sb.append(":");
-        if (end == Double.POSITIVE_INFINITY) {
+        if (end() == Double.POSITIVE_INFINITY) {
             sb.append("~");
         } else {
-            sb.append(formatNumber(end));
+            sb.append(formatNumber(end()));
         }
         return sb.toString();
     }

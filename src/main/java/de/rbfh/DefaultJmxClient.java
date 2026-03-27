@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
@@ -14,8 +13,6 @@ import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class DefaultJmxClient implements JmxClient {
     private static final Logger logger = LoggerFactory.getLogger(DefaultJmxClient.class);
@@ -152,10 +149,5 @@ public class DefaultJmxClient implements JmxClient {
     @Override
     public boolean isConnected() {
         return connector != null && connection != null;
-    }
-
-    public Set<ObjectName> queryNames(ObjectName objectName) throws IOException {
-        ensureConnected();
-        return connection.queryNames(objectName, null);
     }
 }

@@ -25,9 +25,9 @@ class RangeTest {
     @Test
     void testParseSimpleNumber() {
         Range range = Range.parse("10");
-        assertEquals(0, range.getStart(), 0.001);
-        assertEquals(10, range.getEnd(), 0.001);
-        assertFalse(range.isInvert());
+        assertEquals(0, range.start(), 0.001);
+        assertEquals(10, range.end(), 0.001);
+        assertFalse(range.invert());
 
         assertTrue(range.isInRange(5));
         assertTrue(range.isInRange(0));
@@ -39,8 +39,8 @@ class RangeTest {
     @Test
     void testParseRangeWithColon() {
         Range range = Range.parse("10:20");
-        assertEquals(10, range.getStart(), 0.001);
-        assertEquals(20, range.getEnd(), 0.001);
+        assertEquals(10, range.start(), 0.001);
+        assertEquals(20, range.end(), 0.001);
 
         assertTrue(range.isInRange(10));
         assertTrue(range.isInRange(15));
@@ -53,7 +53,7 @@ class RangeTest {
     void testParseInvertRange() {
         Range range = Range.parse("@10:20");
 
-        assertTrue(range.isInvert());
+        assertTrue(range.invert());
         assertFalse(range.isInRange(10));
         assertFalse(range.isInRange(15));
         assertFalse(range.isInRange(20));
@@ -65,8 +65,8 @@ class RangeTest {
     void testParseNegativeInfinity() {
         Range range = Range.parse("~:10");
 
-        assertEquals(Double.NEGATIVE_INFINITY, range.getStart(), 0.001);
-        assertEquals(10, range.getEnd(), 0.001);
+        assertEquals(Double.NEGATIVE_INFINITY, range.start(), 0.001);
+        assertEquals(10, range.end(), 0.001);
 
         assertTrue(range.isInRange(0));
         assertTrue(range.isInRange(10));
@@ -77,8 +77,8 @@ class RangeTest {
     void testParsePositiveInfinity() {
         Range range = Range.parse("10:~");
 
-        assertEquals(10, range.getStart(), 0.001);
-        assertEquals(Double.POSITIVE_INFINITY, range.getEnd(), 0.001);
+        assertEquals(10, range.start(), 0.001);
+        assertEquals(Double.POSITIVE_INFINITY, range.end(), 0.001);
 
         assertFalse(range.isInRange(5));
         assertTrue(range.isInRange(10));
@@ -89,8 +89,8 @@ class RangeTest {
     void testParseFullInfinity() {
         Range range = Range.parse("~");
 
-        assertEquals(Double.NEGATIVE_INFINITY, range.getStart(), 0.001);
-        assertEquals(Double.POSITIVE_INFINITY, range.getEnd(), 0.001);
+        assertEquals(Double.NEGATIVE_INFINITY, range.start(), 0.001);
+        assertEquals(Double.POSITIVE_INFINITY, range.end(), 0.001);
 
         assertTrue(range.isInRange(0));
         assertTrue(range.isInRange(-1000000));
