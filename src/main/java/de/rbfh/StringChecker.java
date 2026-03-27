@@ -1,15 +1,14 @@
 package de.rbfh;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class StringChecker implements Checker {
-    private static final Logger logger = LoggerFactory.getLogger(StringChecker.class);
+    private static final Logger logger = Logger.getLogger(StringChecker.class.getName());
 
     private final CheckerConfig config;
 
@@ -65,13 +64,13 @@ public class StringChecker implements Checker {
             return output;
 
         } catch (IllegalArgumentException e) {
-            logger.error("Invalid argument: {}", e.getMessage());
+            logger.log(Level.SEVERE, "Invalid argument: " + e.getMessage());
             return NaemonOutput.unknown(e.getMessage());
         } catch (IOException e) {
-            logger.error("I/O error: {}", e.getMessage());
+            logger.log(Level.SEVERE, "I/O error: " + e.getMessage());
             return NaemonOutput.unknown("Connection error: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Unexpected error: {}", e.getMessage(), e);
+            logger.log(Level.SEVERE, "Unexpected error: " + e.getMessage(), e);
             return NaemonOutput.unknown("Unexpected error: " + e.getMessage());
         }
     }

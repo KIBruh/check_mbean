@@ -1,8 +1,5 @@
 package de.rbfh;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -15,9 +12,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class RateChecker implements Checker {
-    private static final Logger logger = LoggerFactory.getLogger(RateChecker.class);
+    private static final Logger logger = Logger.getLogger(RateChecker.class.getName());
 
     private final CheckerConfig config;
     private final String statefile;
@@ -85,19 +84,19 @@ public class RateChecker implements Checker {
                     rate = calculateRate(rateMeasurement.value, currentValue,
                                          rateMeasurement.timestamp, currentTime);
                     rateWindowSeconds = (currentTime - rateMeasurement.timestamp) / 1000;
-                    logger.debug("Using historical measurement: rate={}, window={}s", rate, rateWindowSeconds);
+                    logger.log(Level.FINE, "Using historical measurement: rate={0}, window={1}s", new Object[]{rate, rateWindowSeconds});
                 } else {
                     ignoreState = true;
                 }
             }
 
             if (ignoreState || rateWindowSeconds == 0) {
-                logger.debug("State ignored, performing two-point measurement");
+                logger.log(Level.FINE, "State ignored, performing two-point measurement");
                 saveMeasurement(currentValue, currentTime);
                 measurements.add(new Measurement(currentTime, currentValue));
 
                 if (measurements.size() < 2) {
-                    logger.info("Collecting initial measurements, waiting {}s for second measurement...", config.minRateInterval());
+                    logger.log(Level.INFO, "Collecting initial measurements, waiting " + config.minRateInterval() + "s for second measurement...");
                     try {
                         Thread.sleep(config.minRateInterval() * 1000L);
                     } catch (InterruptedException e) {
@@ -149,13 +148,13 @@ public class RateChecker implements Checker {
             return output;
 
         } catch (IllegalArgumentException e) {
-            logger.error("Invalid argument: {}", e.getMessage());
+            logger.log(Level.SEVERE, "Invalid argument: " + e.getMessage());
             return NaemonOutput.unknown(e.getMessage());
         } catch (IOException e) {
-            logger.error("I/O error: {}", e.getMessage());
+            logger.log(Level.SEVERE, "I/O error: " + e.getMessage());
             return NaemonOutput.unknown("Connection error: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Unexpected error: {}", e.getMessage(), e);
+            logger.log(Level.SEVERE, "Unexpected error: " + e.getMessage(), e);
             return NaemonOutput.unknown("Unexpected error: " + e.getMessage());
         }
     }
@@ -167,7 +166,7 @@ public class RateChecker implements Checker {
 
         Measurement last = measurements.get(measurements.size() - 1);
         if (currentValue < last.value) {
-            logger.info("Counter reset detected (current={}, last={}), ignoring state", currentValue, last.value);
+            logger.log(Level.INFO, "Counter reset detected (current=" + currentValue + ", last=" + last.value + "), ignoring state");
             return true;
         }
 
@@ -229,12 +228,12 @@ public class RateChecker implements Checker {
                         double value = Double.parseDouble(parts[1]);
                         measurements.add(new Measurement(timestamp, value));
                     } catch (NumberFormatException e) {
-                        logger.warn("Invalid measurement line: {}", line);
+                        logger.log(Level.WARNING, "Invalid measurement line: " + line);
                     }
                 }
             }
         } catch (IOException e) {
-            logger.warn("Could not load state file: {}", e.getMessage());
+            logger.log(Level.WARNING, "Could not load state file: " + e.getMessage());
         }
 
         return measurements;
@@ -253,7 +252,7 @@ public class RateChecker implements Checker {
                 writer.newLine();
             }
         } catch (IOException e) {
-            logger.warn("Could not save state file: {}", e.getMessage());
+            logger.log(Level.WARNING, "Could not save state file: " + e.getMessage());
         }
     }
 
@@ -264,7 +263,7 @@ public class RateChecker implements Checker {
             writer.write(timestamp + " " + value);
             writer.newLine();
         } catch (IOException e) {
-            logger.warn("Could not save measurement: {}", e.getMessage());
+            logger.log(Level.WARNING, "Could not save measurement: " + e.getMessage());
         }
     }
 

@@ -6,13 +6,10 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
 public class CliParser {
-    private static final Logger logger = LoggerFactory.getLogger(CliParser.class);
 
     private final Options options;
     private final CommandLine cmd;

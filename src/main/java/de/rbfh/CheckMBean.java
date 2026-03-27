@@ -1,11 +1,11 @@
 package de.rbfh;
 
 import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class CheckMBean {
-    private static final Logger logger = LoggerFactory.getLogger(CheckMBean.class);
+    private static final Logger logger = Logger.getLogger(CheckMBean.class.getName());
 
     public static void main(String[] args) {
         try {
@@ -40,7 +40,7 @@ public class CheckMBean {
             System.err.println("Error parsing arguments: " + e.getMessage());
             System.exit(NaemonStatus.UNKNOWN.getExitCode());
         } catch (Exception e) {
-            logger.error("Unexpected error", e);
+            logger.log(Level.SEVERE, "Unexpected error", e);
             System.err.println("Error: " + e.getMessage());
             System.exit(NaemonStatus.UNKNOWN.getExitCode());
         }

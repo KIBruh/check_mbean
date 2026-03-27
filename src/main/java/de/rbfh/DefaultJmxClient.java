@@ -1,8 +1,5 @@
 package de.rbfh;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
@@ -13,9 +10,11 @@ import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DefaultJmxClient implements JmxClient {
-    private static final Logger logger = LoggerFactory.getLogger(DefaultJmxClient.class);
+    private static final Logger logger = Logger.getLogger(DefaultJmxClient.class.getName());
 
     private final String jmxUrl;
     private final String username;
@@ -42,9 +41,9 @@ public class DefaultJmxClient implements JmxClient {
             connector.connect();
 
             connection = connector.getMBeanServerConnection();
-            logger.debug("Connected to JMX at {}", jmxUrl);
+            logger.log(Level.FINE, "Connected to JMX at {0}", jmxUrl);
         } catch (IOException e) {
-            logger.error("Failed to connect to JMX at {}: {}", jmxUrl, e.getMessage());
+            logger.log(Level.SEVERE, "Failed to connect to JMX at " + jmxUrl + ": " + e.getMessage());
             throw e;
         }
     }
@@ -68,19 +67,19 @@ public class DefaultJmxClient implements JmxClient {
 
         try {
             Object value = connection.getAttribute(objectName, attributeName);
-            logger.debug("Retrieved attribute {}/{} = {}", objectName, attributeName, value);
+            logger.log(Level.FINE, "Retrieved attribute {0}/{1} = {2}", new Object[]{objectName, attributeName, value});
             return Optional.ofNullable(value);
         } catch (javax.management.AttributeNotFoundException e) {
-            logger.error("Attribute not found: {}/{}", objectName, attributeName);
+            logger.log(Level.SEVERE, "Attribute not found: " + objectName + "/" + attributeName);
             return Optional.empty();
         } catch (javax.management.InstanceNotFoundException e) {
-            logger.error("MBean not found: {}", objectName);
+            logger.log(Level.SEVERE, "MBean not found: " + objectName);
             throw new IOException("MBean not found: " + objectName, e);
         } catch (javax.management.MBeanException e) {
-            logger.error("MBean exception for {}/{}: {}", objectName, attributeName, e.getMessage());
+            logger.log(Level.SEVERE, "MBean exception for " + objectName + "/" + attributeName + ": " + e.getMessage());
             throw new IOException("MBean exception: " + e.getMessage(), e);
         } catch (javax.management.ReflectionException e) {
-            logger.error("Reflection exception for {}/{}: {}", objectName, attributeName, e.getMessage());
+            logger.log(Level.SEVERE, "Reflection exception for " + objectName + "/" + attributeName + ": " + e.getMessage());
             throw new IOException("Reflection exception: " + e.getMessage(), e);
         }
     }
@@ -107,19 +106,19 @@ public class DefaultJmxClient implements JmxClient {
             if (current instanceof CompositeData cd) {
                 Object value = cd.get(part);
                 if (value == null) {
-                    logger.debug("Path component not found: {}", part);
+                    logger.log(Level.FINE, "Path component not found: {0}", part);
                     return Optional.empty();
                 }
                 current = value;
             } else if (current instanceof CompositeDataSupport cds) {
                 Object value = cds.get(part);
                 if (value == null) {
-                    logger.debug("Path component not found: {}", part);
+                    logger.log(Level.FINE, "Path component not found: {0}", part);
                     return Optional.empty();
                 }
                 current = value;
             } else {
-                logger.debug("Cannot traverse path at {} - not CompositeData", part);
+                logger.log(Level.FINE, "Cannot traverse path at {0} - not CompositeData", part);
                 return Optional.empty();
             }
         }
@@ -138,9 +137,9 @@ public class DefaultJmxClient implements JmxClient {
         if (connector != null) {
             try {
                 connector.close();
-                logger.debug("Closed JMX connection");
+                logger.log(Level.FINE, "Closed JMX connection");
             } catch (IOException e) {
-                logger.warn("Error closing JMX connection: {}", e.getMessage());
+                logger.log(Level.WARNING, "Error closing JMX connection: " + e.getMessage());
                 throw e;
             }
         }
