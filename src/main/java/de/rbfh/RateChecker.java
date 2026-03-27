@@ -113,7 +113,28 @@ public class RateChecker implements Checker {
                 measurements.add(new Measurement(currentTime, currentValue));
 
                 if (measurements.size() < 2) {
-                    return NaemonOutput.unknown("Waiting for second measurement...");
+                    logger.info("Collecting initial measurements, waiting {}s for second measurement...", minRateInterval);
+                    try {
+                        Thread.sleep(minRateInterval * 1000L);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return NaemonOutput.unknown("Measurement interrupted");
+                    }
+
+                    Optional<Object> retryValueOpt = jmxClient.getAttribute(objectNameObj, attribute, path);
+                    if (retryValueOpt.isEmpty()) {
+                        return NaemonOutput.unknown("Could not retrieve attribute on retry");
+                    }
+
+                    Object retryValue = retryValueOpt.get();
+                    if (!(retryValue instanceof Number retryNumber)) {
+                        return NaemonOutput.unknown("Attribute is not numeric");
+                    }
+
+                    double retryValueDbl = retryNumber.doubleValue();
+                    long retryTime = System.currentTimeMillis();
+
+                    measurements.add(new Measurement(retryTime, retryValueDbl));
                 }
 
                 Measurement first = measurements.get(measurements.size() - 2);
