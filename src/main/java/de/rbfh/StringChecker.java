@@ -3,7 +3,6 @@ package de.rbfh;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.ObjectName;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -12,31 +11,21 @@ import java.util.regex.PatternSyntaxException;
 public class StringChecker implements Checker {
     private static final Logger logger = LoggerFactory.getLogger(StringChecker.class);
 
-    private final JmxClient jmxClient;
-    private final String objectName;
-    private final String attribute;
-    private final String path;
-    private final String warningRegex;
-    private final String criticalRegex;
+    private final CheckerConfig config;
 
-    public StringChecker(JmxClient jmxClient, String objectName, String attribute,
-                        String path, String warningRegex, String criticalRegex) {
-        this.jmxClient = jmxClient;
-        this.objectName = objectName;
-        this.attribute = attribute;
-        this.path = path;
-        this.warningRegex = warningRegex;
-        this.criticalRegex = criticalRegex;
+    public StringChecker(CheckerConfig config) {
+        this.config = config;
     }
 
     @Override
     public NaemonOutput check() {
         try {
-            ObjectName objectNameObj = new ObjectName(objectName);
-            Optional<Object> valueOpt = jmxClient.getAttribute(objectNameObj, attribute, path);
+            Optional<Object> valueOpt = config.jmxClient().getAttribute(
+                config.objectNameAsObjectName(), config.attribute(), config.path());
 
             if (valueOpt.isEmpty()) {
-                return NaemonOutput.unknown("Could not retrieve attribute: " + attribute + (path != null ? "." + path : ""));
+                return NaemonOutput.unknown("Could not retrieve attribute: " + config.attribute() 
+                    + (config.path() != null ? "." + config.path() : ""));
             }
 
             String value = String.valueOf(valueOpt.get());
@@ -44,17 +33,17 @@ public class StringChecker implements Checker {
             boolean criticalMatch = false;
             boolean warningMatch = false;
 
-            if (criticalRegex != null && !criticalRegex.isEmpty()) {
+            if (config.criticalRegex() != null && !config.criticalRegex().isEmpty()) {
                 try {
-                    criticalMatch = Pattern.compile(criticalRegex).matcher(value).find();
+                    criticalMatch = Pattern.compile(config.criticalRegex()).matcher(value).find();
                 } catch (PatternSyntaxException e) {
                     return NaemonOutput.unknown("Invalid critical regex: " + e.getMessage());
                 }
             }
 
-            if (!criticalMatch && warningRegex != null && !warningRegex.isEmpty()) {
+            if (!criticalMatch && config.warningRegex() != null && !config.warningRegex().isEmpty()) {
                 try {
-                    warningMatch = Pattern.compile(warningRegex).matcher(value).find();
+                    warningMatch = Pattern.compile(config.warningRegex()).matcher(value).find();
                 } catch (PatternSyntaxException e) {
                     return NaemonOutput.unknown("Invalid warning regex: " + e.getMessage());
                 }
@@ -69,7 +58,7 @@ public class StringChecker implements Checker {
                 status = NaemonStatus.OK;
             }
 
-            String attributeLabel = attribute + (path != null ? "." + path : "");
+            String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
             NaemonOutput output = new NaemonOutput(status, attributeLabel + " is '" + value + "'");
             output.addPerfData(attributeLabel, value, "");
 

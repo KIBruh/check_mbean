@@ -59,35 +59,25 @@ public class CheckMBean {
             criticalThreshold = Threshold.parse(parser.getCriticalThreshold(), NaemonStatus.CRITICAL);
         }
 
+        CheckerConfig config = new CheckerConfig(
+                jmxClient,
+                parser.getJmxUrl(),
+                parser.getObjectName(),
+                parser.getAttribute(),
+                parser.getPath(),
+                parser.getStatefile(),
+                parser.getMeanRateInterval(),
+                parser.getMinRateInterval(),
+                warningThreshold,
+                criticalThreshold,
+                parser.getWarningThreshold(),
+                parser.getCriticalThreshold()
+        );
+
         return switch (mode) {
-            case "gauge" -> new GaugeChecker(
-                    jmxClient,
-                    parser.getObjectName(),
-                    parser.getAttribute(),
-                    parser.getPath(),
-                    warningThreshold,
-                    criticalThreshold
-            );
-            case "rate" -> new RateChecker(
-                    jmxClient,
-                    parser.getJmxUrl(),
-                    parser.getObjectName(),
-                    parser.getAttribute(),
-                    parser.getPath(),
-                    parser.getStatefile(),
-                    parser.getMeanRateInterval(),
-                    parser.getMinRateInterval(),
-                    warningThreshold,
-                    criticalThreshold
-            );
-            case "string" -> new StringChecker(
-                    jmxClient,
-                    parser.getObjectName(),
-                    parser.getAttribute(),
-                    parser.getPath(),
-                    parser.getWarningThreshold(),
-                    parser.getCriticalThreshold()
-            );
+            case "gauge" -> new GaugeChecker(config);
+            case "rate" -> new RateChecker(config);
+            case "string" -> new StringChecker(config);
             default -> throw new IllegalArgumentException("Unknown mode: " + mode);
         };
     }

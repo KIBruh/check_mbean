@@ -3,38 +3,27 @@ package de.rbfh;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.ObjectName;
 import java.io.IOException;
 import java.util.Optional;
 
 public class GaugeChecker implements Checker {
     private static final Logger logger = LoggerFactory.getLogger(GaugeChecker.class);
 
-    private final JmxClient jmxClient;
-    private final String objectName;
-    private final String attribute;
-    private final String path;
-    private final Threshold warningThreshold;
-    private final Threshold criticalThreshold;
+    private final CheckerConfig config;
 
-    public GaugeChecker(JmxClient jmxClient, String objectName, String attribute,
-                        String path, Threshold warningThreshold, Threshold criticalThreshold) {
-        this.jmxClient = jmxClient;
-        this.objectName = objectName;
-        this.attribute = attribute;
-        this.path = path;
-        this.warningThreshold = warningThreshold;
-        this.criticalThreshold = criticalThreshold;
+    public GaugeChecker(CheckerConfig config) {
+        this.config = config;
     }
 
     @Override
     public NaemonOutput check() {
         try {
-            ObjectName objectNameObj = new ObjectName(objectName);
-            Optional<Object> valueOpt = jmxClient.getAttribute(objectNameObj, attribute, path);
+            Optional<Object> valueOpt = config.jmxClient().getAttribute(
+                config.objectNameAsObjectName(), config.attribute(), config.path());
 
             if (valueOpt.isEmpty()) {
-                return NaemonOutput.unknown("Could not retrieve attribute: " + attribute + (path != null ? "." + path : ""));
+                return NaemonOutput.unknown("Could not retrieve attribute: " + config.attribute() 
+                    + (config.path() != null ? "." + config.path() : ""));
             }
 
             Object value = valueOpt.get();
@@ -46,17 +35,17 @@ public class GaugeChecker implements Checker {
             double doubleValue = number.doubleValue();
 
             NaemonStatus status = NaemonStatus.OK;
-            if (criticalThreshold != null && criticalThreshold.isViolated(doubleValue)) {
+            if (config.criticalThreshold() != null && config.criticalThreshold().isViolated(doubleValue)) {
                 status = NaemonStatus.CRITICAL;
-            } else if (warningThreshold != null && warningThreshold.isViolated(doubleValue)) {
+            } else if (config.warningThreshold() != null && config.warningThreshold().isViolated(doubleValue)) {
                 status = NaemonStatus.WARNING;
             }
 
-            String attributeLabel = attribute + (path != null ? "." + path : "");
+            String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
             String formattedValue = NaemonOutput.formatNumber(number);
 
             NaemonOutput output = new NaemonOutput(status, attributeLabel + " is " + formattedValue);
-            output.addPerfData(attributeLabel, number, "", warningThreshold, criticalThreshold);
+            output.addPerfData(attributeLabel, number, "", config.warningThreshold(), config.criticalThreshold());
 
             return output;
 

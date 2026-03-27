@@ -3,7 +3,6 @@ package de.rbfh;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.ObjectName;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -20,43 +19,24 @@ import java.util.Optional;
 public class RateChecker implements Checker {
     private static final Logger logger = LoggerFactory.getLogger(RateChecker.class);
 
-    private final JmxClient jmxClient;
-    private final String jmxUrl;
-    private final String objectName;
-    private final String attribute;
-    private final String path;
+    private final CheckerConfig config;
     private final String statefile;
-    private final int meanRateInterval;
-    private final int minRateInterval;
-    private final Threshold warningThreshold;
-    private final Threshold criticalThreshold;
 
-    public RateChecker(JmxClient jmxClient, String jmxUrl, String objectName, String attribute,
-                       String path, String statefile, int meanRateInterval,
-                       int minRateInterval, Threshold warningThreshold,
-                       Threshold criticalThreshold) {
-        this.jmxClient = jmxClient;
-        this.jmxUrl = jmxUrl;
-        this.objectName = objectName;
-        this.attribute = attribute;
-        this.path = path;
-        this.statefile = statefile != null ? statefile : defaultStatefile();
-        this.meanRateInterval = meanRateInterval;
-        this.minRateInterval = minRateInterval;
-        this.warningThreshold = warningThreshold;
-        this.criticalThreshold = criticalThreshold;
+    public RateChecker(CheckerConfig config) {
+        this.config = config;
+        this.statefile = config.statefile() != null ? config.statefile() : defaultStatefile();
     }
 
     private String defaultStatefile() {
         String tempDir = System.getProperty("java.io.tmpdir");
         String hash = generateStatefileHash();
-        String safeObjectName = objectName.replace(":", "_").replace(",", "_").replace("=", "_").replace(".", "_");
-        String safeAttribute = attribute.replace(".", "_");
+        String safeObjectName = config.objectName().replace(":", "_").replace(",", "_").replace("=", "_").replace(".", "_");
+        String safeAttribute = config.attribute().replace(".", "_");
         return tempDir + "/check_mbean_" + hash + "_" + safeObjectName + "_" + safeAttribute + ".state";
     }
 
     private String generateStatefileHash() {
-        String data = jmxUrl + objectName + attribute + (path != null ? path : "");
+        String data = config.jmxUrl() + config.objectName() + config.attribute() + (config.path() != null ? config.path() : "");
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-224");
             byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
@@ -73,11 +53,11 @@ public class RateChecker implements Checker {
     @Override
     public NaemonOutput check() {
         try {
-            ObjectName objectNameObj = new ObjectName(objectName);
-            Optional<Object> valueOpt = jmxClient.getAttribute(objectNameObj, attribute, path);
+            Optional<Object> valueOpt = config.jmxClient().getAttribute(
+                config.objectNameAsObjectName(), config.attribute(), config.path());
 
             if (valueOpt.isEmpty()) {
-                return NaemonOutput.unknown("Could not retrieve attribute: " + attribute);
+                return NaemonOutput.unknown("Could not retrieve attribute: " + config.attribute());
             }
 
             Object value = valueOpt.get();
@@ -117,15 +97,16 @@ public class RateChecker implements Checker {
                 measurements.add(new Measurement(currentTime, currentValue));
 
                 if (measurements.size() < 2) {
-                    logger.info("Collecting initial measurements, waiting {}s for second measurement...", minRateInterval);
+                    logger.info("Collecting initial measurements, waiting {}s for second measurement...", config.minRateInterval());
                     try {
-                        Thread.sleep(minRateInterval * 1000L);
+                        Thread.sleep(config.minRateInterval() * 1000L);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         return NaemonOutput.unknown("Measurement interrupted");
                     }
 
-                    Optional<Object> retryValueOpt = jmxClient.getAttribute(objectNameObj, attribute, path);
+                    Optional<Object> retryValueOpt = config.jmxClient().getAttribute(
+                        config.objectNameAsObjectName(), config.attribute(), config.path());
                     if (retryValueOpt.isEmpty()) {
                         return NaemonOutput.unknown("Could not retrieve attribute on retry");
                     }
@@ -150,20 +131,20 @@ public class RateChecker implements Checker {
             saveMeasurements(measurements, currentValue, currentTime);
 
             NaemonStatus status = NaemonStatus.OK;
-            if (criticalThreshold != null && criticalThreshold.isViolated(rate)) {
+            if (config.criticalThreshold() != null && config.criticalThreshold().isViolated(rate)) {
                 status = NaemonStatus.CRITICAL;
-            } else if (warningThreshold != null && warningThreshold.isViolated(rate)) {
+            } else if (config.warningThreshold() != null && config.warningThreshold().isViolated(rate)) {
                 status = NaemonStatus.WARNING;
             }
 
-            String attributeLabel = attribute + (path != null ? "." + path : "");
+            String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
             String formattedRate = NaemonOutput.formatNumber(rate);
 
             NaemonOutput output = new NaemonOutput(status,
                 attributeLabel + " has a rate of " + formattedRate + "/min (rate window " + rateWindowSeconds + "s)");
 
             output.addPerfData(attributeLabel, (long) currentValue, "c", null, null);
-            output.addPerfData(attributeLabel + ".rate", rate, "", warningThreshold, criticalThreshold);
+            output.addPerfData(attributeLabel + ".rate", rate, "", config.warningThreshold(), config.criticalThreshold());
 
             return output;
 
@@ -200,11 +181,11 @@ public class RateChecker implements Checker {
 
         Measurement last = measurements.get(measurements.size() - 1);
         long ageSeconds = (currentTime - last.timestamp) / 1000;
-        return ageSeconds <= 2 * meanRateInterval;
+        return ageSeconds <= 2 * config.meanRateInterval();
     }
 
     private Measurement findRateMeasurement(List<Measurement> measurements, long currentTime) {
-        long targetTime = currentTime - (meanRateInterval * 1000L);
+        long targetTime = currentTime - (config.meanRateInterval() * 1000L);
 
         Measurement closest = null;
         long closestDiff = Long.MAX_VALUE;
@@ -260,7 +241,7 @@ public class RateChecker implements Checker {
     }
 
     private void saveMeasurements(List<Measurement> measurements, double currentValue, long currentTime) {
-        long purgeThreshold = currentTime - (3L * meanRateInterval * 1000L);
+        long purgeThreshold = currentTime - (3L * config.meanRateInterval() * 1000L);
 
         measurements.removeIf(m -> m.timestamp < purgeThreshold);
         measurements.add(new Measurement(currentTime, currentValue));
