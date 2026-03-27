@@ -1,0 +1,103 @@
+[
+  {
+    "name": "de.rbfh.CheckMBean"
+  },
+  {
+    "name": "de.rbfh.Checker"
+  },
+  {
+    "name": "de.rbfh.CheckerConfig"
+  },
+  {
+    "name": "de.rbfh.CliParser"
+  },
+  {
+    "name": "de.rbfh.DefaultJmxClient"
+  },
+  {
+    "name": "de.rbfh.GaugeChecker"
+  },
+  {
+    "name": "de.rbfh.JmxClient"
+  },
+  {
+    "name": "de.rbfh.NaemonOutput"
+  },
+  {
+    "name": "de.rbfh.NaemonStatus"
+  },
+  {
+    "name": "de.rbfh.Range"
+  },
+  {
+    "name": "de.rbfh.RateChecker"
+  },
+  {
+    "name": "de.rbfh.StringChecker"
+  },
+  {
+    "name": "de.rbfh.Threshold"
+  },
+  {
+    "name": "javax.management.ObjectName",
+    "allPublicConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "javax.management.MBeanServerConnection",
+    "allPublicMethods": true
+  },
+  {
+    "name": "javax.management.remote.JMXConnector",
+    "allPublicMethods": true
+  },
+  {
+    "name": "javax.management.remote.JMXConnectorFactory",
+    "allPublicMethods": true
+  },
+  {
+    "name": "javax.management.remote.JMXServiceURL",
+    "allPublicConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "javax.management.openmbean.CompositeData",
+    "allPublicMethods": true
+  },
+  {
+    "name": "javax.management.openmbean.CompositeDataSupport",
+    "allPublicConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "javax.management.openmbean.CompositeType",
+    "allPublicConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.commons.cli.Options",
+    "allPublicConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.commons.cli.CommandLine",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.commons.cli.DefaultParser",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.apache.commons.cli.HelpFormatter",
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.apache.commons.cli.Option",
+    "allPublicConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.commons.cli.ParseException",
+    "allPublicConstructors": true
+  }
+]
