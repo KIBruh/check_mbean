@@ -24,7 +24,7 @@ public class Threshold {
     }
 
     public boolean isViolated(double value) {
-        return range.isInRange(value);
+        return !range.isInRange(value);
     }
 
     public Range getRange() {
