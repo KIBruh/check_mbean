@@ -10,10 +10,8 @@ public class NaemonOutput {
 
     private static DecimalFormat createPlainFormat() {
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.US);
-        symbols.setGroupingSeparator(',');
-        DecimalFormat format = new DecimalFormat("#,##0.##########", symbols);
-        format.setGroupingUsed(true);
-        format.setGroupingSize(3);
+        DecimalFormat format = new DecimalFormat("0.##########", symbols);
+        format.setGroupingUsed(false);
         return format;
     }
 
