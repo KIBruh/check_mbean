@@ -32,7 +32,10 @@ public class CheckMBean {
 
             try {
                 Checker checker = createChecker(parser, jmxClient);
+                long startTime = System.nanoTime();
                 NaemonOutput output = checker.check();
+                double execTimeSeconds = (System.nanoTime() - startTime) / 1_000_000_000.0;
+                output.addExecTime(execTimeSeconds);
                 System.out.println(output.build());
                 System.exit(output.getStatus().getExitCode());
             } finally {
@@ -55,10 +58,10 @@ public class CheckMBean {
         Threshold warningThreshold = null;
         Threshold criticalThreshold = null;
 
-        if (parser.getWarningThreshold() != null) {
+        if (!"string".equals(mode) && parser.getWarningThreshold() != null) {
             warningThreshold = Threshold.parse(parser.getWarningThreshold(), NaemonStatus.WARNING);
         }
-        if (parser.getCriticalThreshold() != null) {
+        if (!"string".equals(mode) && parser.getCriticalThreshold() != null) {
             criticalThreshold = Threshold.parse(parser.getCriticalThreshold(), NaemonStatus.CRITICAL);
         }
 

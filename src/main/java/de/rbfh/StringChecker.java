@@ -59,7 +59,6 @@ public class StringChecker implements Checker {
 
             String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
             NaemonOutput output = new NaemonOutput(status, attributeLabel + " is '" + value + "'");
-            output.addPerfData(attributeLabel, value, "");
 
             return output;
 

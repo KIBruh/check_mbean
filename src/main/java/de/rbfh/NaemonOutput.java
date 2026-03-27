@@ -53,20 +53,14 @@ public class NaemonOutput {
         return addPerfData(label, value, unit, null, null);
     }
 
-    public NaemonOutput addPerfData(String label, String value, String unit) {
+    public NaemonOutput addExecTime(double seconds) {
         if (perfData.length() > 0) {
             perfData.append(" ");
         }
-
-        perfData.append("'");
-        perfData.append(escapePerfDataLabel(label));
-        perfData.append("'=");
-        perfData.append(value != null ? value : "");
-        if (unit != null && !unit.isEmpty()) {
-            perfData.append(unit);
-        }
-        perfData.append(";;");
-
+        perfData.append("'time'=");
+        perfData.append(formatNumber(seconds));
+        perfData.append("s");
+        perfData.append(";;;");
         return this;
     }
 
