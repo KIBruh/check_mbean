@@ -96,34 +96,6 @@ public class CliParser {
                 .build());
 
         opts.addOption(Option.builder()
-                .longOpt("keystore")
-                .hasArg()
-                .argName("FILE")
-                .desc("Path to SSL keystore")
-                .build());
-
-        opts.addOption(Option.builder()
-                .longOpt("keystore-password")
-                .hasArg()
-                .argName("PASSWORD")
-                .desc("SSL keystore password")
-                .build());
-
-        opts.addOption(Option.builder()
-                .longOpt("truststore")
-                .hasArg()
-                .argName("FILE")
-                .desc("Path to SSL truststore")
-                .build());
-
-        opts.addOption(Option.builder()
-                .longOpt("truststore-password")
-                .hasArg()
-                .argName("PASSWORD")
-                .desc("SSL truststore password")
-                .build());
-
-        opts.addOption(Option.builder()
                 .longOpt("timeout")
                 .hasArg()
                 .argName("SECONDS")
@@ -197,22 +169,6 @@ public class CliParser {
 
     public String getPassword() {
         return cmd.getOptionValue("password");
-    }
-
-    public String getKeystore() {
-        return cmd.getOptionValue("keystore");
-    }
-
-    public String getKeystorePassword() {
-        return cmd.getOptionValue("keystore-password");
-    }
-
-    public String getTruststore() {
-        return cmd.getOptionValue("truststore");
-    }
-
-    public String getTruststorePassword() {
-        return cmd.getOptionValue("truststore-password");
     }
 
     public int getTimeout() {

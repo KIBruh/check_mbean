@@ -22,10 +22,6 @@ public class CheckMBean {
                     parser.getJmxUrl(),
                     parser.getUsername(),
                     parser.getPassword(),
-                    parser.getKeystore(),
-                    parser.getKeystorePassword(),
-                    parser.getTruststore(),
-                    parser.getTruststorePassword(),
                     parser.getTimeout()
             );
 

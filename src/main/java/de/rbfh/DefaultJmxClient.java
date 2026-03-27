@@ -23,26 +23,15 @@ public class DefaultJmxClient implements JmxClient {
     private final String jmxUrl;
     private final String username;
     private final String password;
-    private final String keystore;
-    private final String keystorePassword;
-    private final String truststore;
-    private final String truststorePassword;
     private final int timeout;
 
     private JMXConnector connector;
     private MBeanServerConnection connection;
 
-    public DefaultJmxClient(String jmxUrl, String username, String password,
-                             String keystore, String keystorePassword,
-                             String truststore, String truststorePassword,
-                             int timeout) {
+    public DefaultJmxClient(String jmxUrl, String username, String password, int timeout) {
         this.jmxUrl = jmxUrl;
         this.username = username;
         this.password = password;
-        this.keystore = keystore;
-        this.keystorePassword = keystorePassword;
-        this.truststore = truststore;
-        this.truststorePassword = truststorePassword;
         this.timeout = timeout;
     }
 
@@ -69,13 +58,6 @@ public class DefaultJmxClient implements JmxClient {
         if (username != null && password != null) {
             String[] credentials = {username, password};
             env.put(javax.management.remote.JMXConnector.CREDENTIALS, credentials);
-        }
-
-        if (keystore != null || truststore != null) {
-            System.setProperty("javax.net.ssl.keyStore", keystore != null ? keystore : "");
-            System.setProperty("javax.net.ssl.keyStorePassword", keystorePassword != null ? keystorePassword : "");
-            System.setProperty("javax.net.ssl.trustStore", truststore != null ? truststore : "");
-            System.setProperty("javax.net.ssl.trustStorePassword", truststorePassword != null ? truststorePassword : "");
         }
 
         env.put("jmx.remote.x.request.waiting", timeout * 1000);
