@@ -70,6 +70,7 @@ public class CheckMBean {
             );
             case "rate" -> new RateChecker(
                     jmxClient,
+                    parser.getJmxUrl(),
                     parser.getObjectName(),
                     parser.getAttribute(),
                     parser.getPath(),

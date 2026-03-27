@@ -7,9 +7,12 @@ import javax.management.ObjectName;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +21,7 @@ public class RateChecker implements Checker {
     private static final Logger logger = LoggerFactory.getLogger(RateChecker.class);
 
     private final JmxClient jmxClient;
+    private final String jmxUrl;
     private final String objectName;
     private final String attribute;
     private final String path;
@@ -27,11 +31,12 @@ public class RateChecker implements Checker {
     private final Threshold warningThreshold;
     private final Threshold criticalThreshold;
 
-    public RateChecker(JmxClient jmxClient, String objectName, String attribute,
+    public RateChecker(JmxClient jmxClient, String jmxUrl, String objectName, String attribute,
                        String path, String statefile, int meanRateInterval,
                        int minRateInterval, Threshold warningThreshold,
                        Threshold criticalThreshold) {
         this.jmxClient = jmxClient;
+        this.jmxUrl = jmxUrl;
         this.objectName = objectName;
         this.attribute = attribute;
         this.path = path;
@@ -44,9 +49,25 @@ public class RateChecker implements Checker {
 
     private String defaultStatefile() {
         String tempDir = System.getProperty("java.io.tmpdir");
-        String safeObjectName = objectName.replace(":", "_").replace(",", "_").replace("=", "_");
+        String hash = generateStatefileHash();
+        String safeObjectName = objectName.replace(":", "_").replace(",", "_").replace("=", "_").replace(".", "_");
         String safeAttribute = attribute.replace(".", "_");
-        return tempDir + "/check_mbean_" + safeObjectName + "_" + safeAttribute + ".state";
+        return tempDir + "/check_mbean_" + hash + "_" + safeObjectName + "_" + safeAttribute + ".state";
+    }
+
+    private String generateStatefileHash() {
+        String data = jmxUrl + objectName + attribute + (path != null ? path : "");
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-224");
+            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.substring(0, 10);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-224 not available", e);
+        }
     }
 
     @Override
