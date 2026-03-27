@@ -91,6 +91,10 @@ public class RateChecker implements Checker {
 
             List<Measurement> measurements = loadMeasurements();
             boolean ignoreState = shouldIgnoreState(measurements, currentValue);
+            
+            if (ignoreState) {
+                measurements.clear();
+            }
 
             double rate = 0;
             long rateWindowSeconds = 0;
