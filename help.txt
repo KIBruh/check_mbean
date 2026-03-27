@@ -1,0 +1,31 @@
+usage: check_mbean
+    --attribute <NAME>                 MBean attribute name (e.g.,
+                                       HeapMemoryUsage)
+    --critical <THRESHOLD>             Critical threshold (range or regex
+                                       depending on mode)
+ -h,--help                             Print this help message
+    --keystore <FILE>                  Path to SSL keystore
+    --keystore-password <PASSWORD>     SSL keystore password
+    --mean-rate-interval <SECONDS>     Mean rate interval in seconds for
+                                       rate mode (default: 300)
+    --min-rate-interval <SECONDS>      Minimum interval between
+                                       measurements for rate mode
+                                       (default: 60)
+    --mode <MODE>                      Monitoring mode: gauge, rate,
+                                       string (default: gauge)
+    --object-name <NAME>               MBean object name (e.g.,
+                                       java.lang:type=Memory)
+    --password <PASSWORD>              JMX authentication password
+    --path <PATH>                      Path to nested attribute in
+                                       CompositeData (e.g., used)
+    --statefile <FILE>                 Path to state file for rate mode
+    --timeout <SECONDS>                Connection timeout in seconds
+                                       (default: 60)
+    --truststore <FILE>                Path to SSL truststore
+    --truststore-password <PASSWORD>   SSL truststore password
+    --url <URL>                        JMX Service URL (e.g.,
+                                       service:jmx:rmi:///jndi/rmi://host:
+                                       port/jmxrmi)
+    --username <NAME>                  JMX authentication username
+    --warning <THRESHOLD>              Warning threshold (range or regex
+                                       depending on mode)
