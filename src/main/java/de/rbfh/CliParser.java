@@ -129,6 +129,23 @@ public class CliParser {
     public void printHelp() {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("check_mbean", options);
+
+        System.out.println();
+        System.out.println("Examples:");
+        System.out.println("  # Gauge mode - monitor heap memory usage");
+        System.out.println("  check_mbean --url service:jmx:rmi:///jndi/rmi://host:9999/jmxrmi \\");
+        System.out.println("    --object-name java.lang:type=Memory --attribute HeapMemoryUsage \\");
+        System.out.println("    --path used --warning 100000000 --critical 200000000");
+        System.out.println();
+        System.out.println("  # Rate mode - monitor request counter rate");
+        System.out.println("  check_mbean --url service:jmx:rmi:///jndi/rmi://host:9999/jmxrmi \\");
+        System.out.println("    --object-name com.example:type=Requests --attribute TotalCount \\");
+        System.out.println("    --mode rate --warning 1000 --critical 2000");
+        System.out.println();
+        System.out.println("  # String mode - check server status");
+        System.out.println("  check_mbean --url service:jmx:rmi:///jndi/rmi://host:9999/jmxrmi \\");
+        System.out.println("    --object-name com.example:type=Server --attribute State \\");
+        System.out.println("    --mode string --critical \"^DOWN$\"");
     }
 
     public boolean hasHelp() {
