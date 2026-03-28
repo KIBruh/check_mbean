@@ -24,11 +24,6 @@ public class CliParser {
     private Options createOptions() {
         Options opts = new Options();
 
-        opts.addOption(Option.builder("h")
-                .longOpt("help")
-                .desc("Print this help message")
-                .build());
-
         opts.addOption(Option.builder()
                 .longOpt("url")
                 .hasArg()
@@ -65,6 +60,20 @@ public class CliParser {
                 .build());
 
         opts.addOption(Option.builder()
+                .longOpt("uom")
+                .hasArg()
+                .argName("UOM")
+                .desc("Unit of measure for performance data (e.g., B, KB, MB, s)")
+                .build());
+
+        opts.addOption(Option.builder()
+                .longOpt("divisor")
+                .hasArg()
+                .argName("NUMBER")
+                .desc("Divide value by this number before threshold check and output")
+                .build());
+
+        opts.addOption(Option.builder()
                 .longOpt("warning")
                 .hasArg()
                 .argName("THRESHOLD")
@@ -76,27 +85,6 @@ public class CliParser {
                 .hasArg()
                 .argName("THRESHOLD")
                 .desc("Critical threshold (range or regex depending on mode)")
-                .build());
-
-        opts.addOption(Option.builder()
-                .longOpt("username")
-                .hasArg()
-                .argName("NAME")
-                .desc("JMX authentication username")
-                .build());
-
-        opts.addOption(Option.builder()
-                .longOpt("password")
-                .hasArg()
-                .argName("PASSWORD")
-                .desc("JMX authentication password")
-                .build());
-
-        opts.addOption(Option.builder()
-                .longOpt("timeout")
-                .hasArg()
-                .argName("SECONDS")
-                .desc("Connection timeout in seconds (default: 60)")
                 .build());
 
         opts.addOption(Option.builder()
@@ -121,17 +109,29 @@ public class CliParser {
                 .build());
 
         opts.addOption(Option.builder()
-                .longOpt("uom")
+                .longOpt("username")
                 .hasArg()
-                .argName("UOM")
-                .desc("Unit of measure for performance data (e.g., B, KB, MB, s)")
+                .argName("NAME")
+                .desc("JMX authentication username")
                 .build());
 
         opts.addOption(Option.builder()
-                .longOpt("divisor")
+                .longOpt("password")
                 .hasArg()
-                .argName("NUMBER")
-                .desc("Divide value by this number before threshold check and output")
+                .argName("PASSWORD")
+                .desc("JMX authentication password")
+                .build());
+
+        opts.addOption(Option.builder()
+                .longOpt("timeout")
+                .hasArg()
+                .argName("SECONDS")
+                .desc("Connection timeout in seconds (default: 60)")
+                .build());
+
+        opts.addOption(Option.builder("h")
+                .longOpt("help")
+                .desc("Print this help message")
                 .build());
 
         return opts;
@@ -139,6 +139,7 @@ public class CliParser {
 
     public void printHelp() {
         HelpFormatter formatter = new HelpFormatter();
+        formatter.setOptionComparator(null);
         formatter.printHelp("check_mbean", options);
 
         System.out.println();
