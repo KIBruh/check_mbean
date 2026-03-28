@@ -107,6 +107,7 @@ public class RateChecker implements Checker {
                         logger.log(Level.FINE, "Rate window {0}s exceeds limit, ignoring state", rateWindowSeconds);
                     } else {
                         logger.log(Level.FINE, "Using historical measurement: rate={0}, window={1}s", new Object[]{rate, rateWindowSeconds});
+                        measurements.add(new Measurement(currentTime, currentValue));
                     }
                 } else {
                     ignoreState = true;
