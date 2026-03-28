@@ -29,9 +29,30 @@ public class RateChecker implements Checker {
     private String defaultStatefile() {
         String tempDir = System.getProperty("java.io.tmpdir");
         String hash = generateStatefileHash();
+        String hostPort = extractHostPort(config.jmxUrl()).replace(".", "_").replace(":", "_");
         String safeObjectName = config.objectName().replace(":", "_").replace(",", "_").replace("=", "_").replace(".", "_");
         String safeAttribute = config.attribute().replace(".", "_");
-        return tempDir + "/check_mbean_" + hash + "_" + safeObjectName + "_" + safeAttribute + ".state";
+        return tempDir + "/check_mbean_" + hash + "_" + hostPort + "_" + safeObjectName + "_" + safeAttribute + ".state";
+    }
+
+    private String extractHostPort(String jmxUrl) {
+        if (jmxUrl.startsWith("service:")) {
+            int rmiIdx = jmxUrl.lastIndexOf("rmi://");
+            if (rmiIdx >= 0) {
+                int hostStart = rmiIdx + 6;
+                int hostEnd = jmxUrl.indexOf("/", hostStart);
+                if (hostEnd > hostStart) {
+                    return jmxUrl.substring(hostStart, hostEnd);
+                } else if (hostStart < jmxUrl.length()) {
+                    return jmxUrl.substring(hostStart);
+                }
+            }
+        }
+        if (jmxUrl.contains(":")) {
+            int lastColon = jmxUrl.lastIndexOf(':');
+            return jmxUrl.substring(0, lastColon);
+        }
+        return "localhost";
     }
 
     private String generateStatefileHash() {
