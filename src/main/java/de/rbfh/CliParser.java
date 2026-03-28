@@ -167,7 +167,7 @@ public class CliParser {
     public String getJmxUrl() {
         String url = cmd.getOptionValue("url");
         if (url != null && !url.startsWith("service:") && url.contains(":")) {
-            return "service:jmx:rmi:///jndi/rmi://" + url + "/jmxrmi";
+            return "service:jmx:rmi://" + url + "/jndi/rmi://" + url + "/jmxrmi";
         }
         return url;
     }

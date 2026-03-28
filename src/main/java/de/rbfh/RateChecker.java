@@ -3,6 +3,7 @@ package de.rbfh;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.management.remote.JMXServiceURL;
 
 public class RateChecker implements Checker {
     private static final Logger logger = Logger.getLogger(RateChecker.class.getName());
@@ -36,23 +39,17 @@ public class RateChecker implements Checker {
     }
 
     private String extractHostPort(String jmxUrl) {
-        if (jmxUrl.startsWith("service:")) {
-            int rmiIdx = jmxUrl.lastIndexOf("rmi://");
-            if (rmiIdx >= 0) {
-                int hostStart = rmiIdx + 6;
-                int hostEnd = jmxUrl.indexOf("/", hostStart);
-                if (hostEnd > hostStart) {
-                    return jmxUrl.substring(hostStart, hostEnd);
-                } else if (hostStart < jmxUrl.length()) {
-                    return jmxUrl.substring(hostStart);
-                }
+        try {
+            JMXServiceURL url = new JMXServiceURL(jmxUrl);
+            String host = url.getHost();
+            int port = url.getPort();
+            if (host == null || host.isEmpty() || port <= 0) {
+                return "localhost";
             }
+            return host + ":" + port;
+        } catch (MalformedURLException e) {
+            return "localhost";
         }
-        if (jmxUrl.contains(":")) {
-            int lastColon = jmxUrl.lastIndexOf(':');
-            return jmxUrl.substring(0, lastColon);
-        }
-        return "localhost";
     }
 
     private String generateStatefileHash() {
