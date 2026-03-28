@@ -11,6 +11,7 @@ record CheckerConfig(
     String statefile,
     int meanRateInterval,
     int minRateInterval,
+    int rateWindowMultiplier,
     Threshold warningThreshold,
     Threshold criticalThreshold,
     String warningRegex,

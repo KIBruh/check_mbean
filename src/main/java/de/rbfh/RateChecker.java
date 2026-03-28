@@ -102,7 +102,7 @@ public class RateChecker implements Checker {
                     rate = calculateRate(rateMeasurement.value, currentValue,
                                          rateMeasurement.timestamp, currentTime);
                     rateWindowSeconds = (currentTime - rateMeasurement.timestamp) / 1000;
-                    if (rateWindowSeconds > 2L * config.meanRateInterval()) {
+                    if (rateWindowSeconds > config.rateWindowMultiplier() * config.meanRateInterval()) {
                         ignoreState = true;
                         logger.log(Level.FINE, "Rate window {0}s exceeds limit, ignoring state", rateWindowSeconds);
                     } else {
@@ -211,7 +211,7 @@ public class RateChecker implements Checker {
         Measurement last = measurements.get(measurements.size() - 1);
         long now = System.currentTimeMillis();
         long ageSeconds = (now - last.timestamp) / 1000;
-        return ageSeconds <= 2 * config.meanRateInterval();
+        return ageSeconds <= config.rateWindowMultiplier() * config.meanRateInterval();
     }
 
     private Measurement findRateMeasurement(List<Measurement> measurements, long currentTime) {
@@ -272,7 +272,7 @@ public class RateChecker implements Checker {
 
     private void saveMeasurements(List<Measurement> measurements) {
         long currentTime = System.currentTimeMillis();
-        long purgeThreshold = currentTime - (3L * config.meanRateInterval() * 1000L);
+        long purgeThreshold = currentTime - ((long) config.rateWindowMultiplier() * config.meanRateInterval() * 1000L);
 
         measurements.removeIf(m -> m.timestamp < purgeThreshold);
 

@@ -60,6 +60,20 @@ public class CliParser {
                 .build());
 
         opts.addOption(Option.builder()
+                .longOpt("min-rate-interval")
+                .hasArg()
+                .argName("SECONDS")
+                .desc("Minimum interval between measurements for rate mode (default: 60)")
+                .build());
+
+        opts.addOption(Option.builder()
+                .longOpt("rate-window-multiplier")
+                .hasArg()
+                .argName("MULTIPLIER")
+                .desc("Multiplier for mean-rate-interval to determine when statefile is invalid (default: 3)")
+                .build());
+
+        opts.addOption(Option.builder()
                 .longOpt("uom")
                 .hasArg()
                 .argName("UOM")
@@ -218,6 +232,10 @@ public class CliParser {
 
     public int getMinRateInterval() {
         return Integer.parseInt(cmd.getOptionValue("min-rate-interval", "60"));
+    }
+
+    public int getRateWindowMultiplier() {
+        return Integer.parseInt(cmd.getOptionValue("rate-window-multiplier", "3"));
     }
 
     public String getUom() {

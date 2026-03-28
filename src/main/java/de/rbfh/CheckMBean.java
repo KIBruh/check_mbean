@@ -105,6 +105,7 @@ public class CheckMBean {
                 parser.getStatefile(),
                 parser.getMeanRateInterval(),
                 parser.getMinRateInterval(),
+                parser.getRateWindowMultiplier(),
                 warningThreshold,
                 criticalThreshold,
                 warningRegex,
