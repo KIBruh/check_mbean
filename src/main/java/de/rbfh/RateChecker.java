@@ -102,7 +102,7 @@ public class RateChecker implements Checker {
                     rate = calculateRate(rateMeasurement.value, currentValue,
                                          rateMeasurement.timestamp, currentTime);
                     rateWindowSeconds = (currentTime - rateMeasurement.timestamp) / 1000;
-                    if (rateWindowSeconds > 3L * config.meanRateInterval()) {
+                    if (rateWindowSeconds > 2L * config.meanRateInterval()) {
                         ignoreState = true;
                         logger.log(Level.FINE, "Rate window {0}s exceeds limit, ignoring state", rateWindowSeconds);
                     } else {
