@@ -84,7 +84,12 @@ public class RateChecker implements Checker {
                     rate = calculateRate(rateMeasurement.value, currentValue,
                                          rateMeasurement.timestamp, currentTime);
                     rateWindowSeconds = (currentTime - rateMeasurement.timestamp) / 1000;
-                    logger.log(Level.FINE, "Using historical measurement: rate={0}, window={1}s", new Object[]{rate, rateWindowSeconds});
+                    if (rateWindowSeconds > 3L * config.meanRateInterval()) {
+                        ignoreState = true;
+                        logger.log(Level.FINE, "Rate window {0}s exceeds limit, ignoring state", rateWindowSeconds);
+                    } else {
+                        logger.log(Level.FINE, "Using historical measurement: rate={0}, window={1}s", new Object[]{rate, rateWindowSeconds});
+                    }
                 } else {
                     ignoreState = true;
                 }
@@ -92,6 +97,7 @@ public class RateChecker implements Checker {
 
             if (ignoreState || rateWindowSeconds == 0) {
                 logger.log(Level.FINE, "State ignored, performing two-point measurement");
+                measurements.clear();
                 saveMeasurement(currentValue, currentTime);
                 measurements.add(new Measurement(currentTime, currentValue));
 
