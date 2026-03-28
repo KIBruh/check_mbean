@@ -16,7 +16,9 @@ record CheckerConfig(
     String warningRegex,
     String criticalRegex,
     boolean warningNegated,
-    boolean criticalNegated
+    boolean criticalNegated,
+    String uom,
+    double divisor
 ) {
     public ObjectName objectNameAsObjectName() {
         try {

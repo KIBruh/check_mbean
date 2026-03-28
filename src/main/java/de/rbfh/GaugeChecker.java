@@ -31,7 +31,8 @@ public class GaugeChecker implements Checker {
                 throw new IllegalArgumentException("Attribute value is not numeric: " + value.getClass().getName());
             }
 
-            double doubleValue = number.doubleValue();
+            double divisor = config.divisor();
+            double doubleValue = number.doubleValue() / divisor;
 
             NaemonStatus status = NaemonStatus.OK;
             if (config.criticalThreshold() != null && config.criticalThreshold().isViolated(doubleValue)) {
@@ -41,10 +42,11 @@ public class GaugeChecker implements Checker {
             }
 
             String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
-            String formattedValue = NaemonOutput.formatNumber(number);
+            String formattedValue = NaemonOutput.formatNumber(doubleValue);
+            String uom = config.uom() != null ? " " + config.uom() : "";
 
-            NaemonOutput output = new NaemonOutput(status, attributeLabel + " is " + formattedValue);
-            output.addPerfData(attributeLabel, number, "", config.warningThreshold(), config.criticalThreshold());
+            NaemonOutput output = new NaemonOutput(status, attributeLabel + " is " + formattedValue + uom);
+            output.addPerfData(attributeLabel, doubleValue, config.uom(), config.warningThreshold(), config.criticalThreshold());
 
             return output;
 

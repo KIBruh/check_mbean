@@ -120,6 +120,20 @@ public class CliParser {
                 .desc("Minimum interval between measurements for rate mode (default: 60)")
                 .build());
 
+        opts.addOption(Option.builder()
+                .longOpt("uom")
+                .hasArg()
+                .argName("UOM")
+                .desc("Unit of measure for performance data (e.g., B, KB, MB, s)")
+                .build());
+
+        opts.addOption(Option.builder()
+                .longOpt("divisor")
+                .hasArg()
+                .argName("NUMBER")
+                .desc("Divide value by this number before threshold check and output")
+                .build());
+
         return opts;
     }
 
@@ -199,6 +213,14 @@ public class CliParser {
 
     public int getMinRateInterval() {
         return Integer.parseInt(cmd.getOptionValue("min-rate-interval", "60"));
+    }
+
+    public String getUom() {
+        return cmd.getOptionValue("uom");
+    }
+
+    public double getDivisor() {
+        return Double.parseDouble(cmd.getOptionValue("divisor", "1"));
     }
 
     public String[] getArgs() {

@@ -110,7 +110,9 @@ public class CheckMBean {
                 warningRegex,
                 criticalRegex,
                 warningNegated,
-                criticalNegated
+                criticalNegated,
+                parser.getUom(),
+                parser.getDivisor()
         );
 
         return switch (mode) {
@@ -140,7 +142,12 @@ public class CheckMBean {
             if (valueOpt.isEmpty()) {
                 throw new IllegalStateException("Could not retrieve attribute: " + parser.getAttribute());
             }
-            return String.valueOf(valueOpt.get());
+            Object value = valueOpt.get();
+            double divisor = parser.getDivisor();
+            if (divisor != 1.0 && value instanceof Number number) {
+                return NaemonOutput.formatNumber(number.doubleValue() / divisor);
+            }
+            return String.valueOf(value);
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch value: " + e.getMessage(), e);
         }

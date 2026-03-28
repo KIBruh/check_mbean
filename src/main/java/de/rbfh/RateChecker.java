@@ -127,6 +127,11 @@ public class RateChecker implements Checker {
                 rateWindowSeconds = (second.timestamp - first.timestamp) / 1000;
             }
 
+            double divisor = config.divisor();
+            if (divisor != 1.0) {
+                rate = rate / divisor;
+            }
+
             saveMeasurements(measurements, currentValue, currentTime);
 
             NaemonStatus status = NaemonStatus.OK;
@@ -138,12 +143,14 @@ public class RateChecker implements Checker {
 
             String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
             String formattedRate = NaemonOutput.formatNumber(rate);
+            String uom = config.uom();
+            String unitSuffix = uom != null ? " " + uom : "/min";
 
             NaemonOutput output = new NaemonOutput(status,
-                attributeLabel + " has a rate of " + formattedRate + "/min (rate window " + rateWindowSeconds + "s)");
+                attributeLabel + " has a rate of " + formattedRate + unitSuffix + " (rate window " + rateWindowSeconds + "s)");
 
             output.addPerfData(attributeLabel, (long) currentValue, "c", null, null);
-            output.addPerfData(attributeLabel + ".rate", rate, "", config.warningThreshold(), config.criticalThreshold());
+            output.addPerfData(attributeLabel + ".rate", rate, config.uom(), config.warningThreshold(), config.criticalThreshold());
 
             return output;
 
