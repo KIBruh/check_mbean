@@ -42,7 +42,7 @@ public class GaugeChecker implements Checker {
             }
 
             String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
-            String formattedValue = NaemonOutput.formatNumber(doubleValue);
+            String formattedValue = NaemonOutput.formatNumberForHuman(doubleValue);
             String uom = config.uom() != null ? " " + config.uom() : "";
 
             NaemonOutput output = new NaemonOutput(status, attributeLabel + " is " + formattedValue + uom);

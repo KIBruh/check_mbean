@@ -142,7 +142,7 @@ public class RateChecker implements Checker {
             }
 
             String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
-            String formattedRate = NaemonOutput.formatNumber(rate);
+            String formattedRate = NaemonOutput.formatNumberForHuman(rate);
             String uom = config.uom();
             String unitSuffix = uom != null ? " " + uom : "/min";
 

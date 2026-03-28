@@ -86,6 +86,25 @@ public class NaemonOutput {
         return PLAIN_FORMAT.format(value.doubleValue());
     }
 
+    private static final DecimalFormat HUMAN_FORMAT = createHumanFormat();
+
+    private static DecimalFormat createHumanFormat() {
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.US);
+        DecimalFormat format = new DecimalFormat("0.###", symbols);
+        format.setGroupingUsed(false);
+        return format;
+    }
+
+    public static String formatNumberForHuman(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return "0";
+        }
+        if (value == (long) value && Math.abs(value) < Long.MAX_VALUE) {
+            return String.format(Locale.US, "%d", (long) value);
+        }
+        return HUMAN_FORMAT.format(value);
+    }
+
     private static String escapePerfDataLabel(String label) {
         if (label == null) {
             return "";
