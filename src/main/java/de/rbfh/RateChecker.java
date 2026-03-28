@@ -116,7 +116,6 @@ public class RateChecker implements Checker {
             if (ignoreState || rateWindowSeconds == 0) {
                 logger.log(Level.FINE, "State ignored, performing two-point measurement");
                 measurements.clear();
-                saveMeasurement(currentValue, currentTime);
                 measurements.add(new Measurement(currentTime, currentValue));
 
                 if (measurements.size() < 2) {
@@ -156,7 +155,7 @@ public class RateChecker implements Checker {
                 rate = rate / divisor;
             }
 
-            saveMeasurements(measurements, currentValue, currentTime);
+            saveMeasurements(measurements);
 
             NaemonStatus status = NaemonStatus.OK;
             if (config.criticalThreshold() != null && config.criticalThreshold().isViolated(rate)) {
@@ -210,7 +209,8 @@ public class RateChecker implements Checker {
         }
 
         Measurement last = measurements.get(measurements.size() - 1);
-        long ageSeconds = (currentTime - last.timestamp) / 1000;
+        long now = System.currentTimeMillis();
+        long ageSeconds = (now - last.timestamp) / 1000;
         return ageSeconds <= 2 * config.meanRateInterval();
     }
 
@@ -270,11 +270,11 @@ public class RateChecker implements Checker {
         return measurements;
     }
 
-    private void saveMeasurements(List<Measurement> measurements, double currentValue, long currentTime) {
+    private void saveMeasurements(List<Measurement> measurements) {
+        long currentTime = System.currentTimeMillis();
         long purgeThreshold = currentTime - (3L * config.meanRateInterval() * 1000L);
 
         measurements.removeIf(m -> m.timestamp < purgeThreshold);
-        measurements.add(new Measurement(currentTime, currentValue));
 
         Path path = Paths.get(statefile);
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
@@ -284,17 +284,6 @@ public class RateChecker implements Checker {
             }
         } catch (IOException e) {
             logger.log(Level.WARNING, "Could not save state file: " + e.getMessage());
-        }
-    }
-
-    private void saveMeasurement(double value, long timestamp) {
-        Path path = Paths.get(statefile);
-        try (BufferedWriter writer = Files.newBufferedWriter(path, java.nio.file.StandardOpenOption.CREATE,
-                                                               java.nio.file.StandardOpenOption.APPEND)) {
-            writer.write(timestamp + " " + value);
-            writer.newLine();
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not save measurement: " + e.getMessage());
         }
     }
 
