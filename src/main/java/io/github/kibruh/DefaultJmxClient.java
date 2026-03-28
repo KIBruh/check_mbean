@@ -1,4 +1,4 @@
-package de.rbfh;
+package io.github.kibruh;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;

@@ -64,7 +64,7 @@ mvn verify
 - Classes: PascalCase (e.g., `CheckMBean`, `JmxClient`)
 - Methods/variables: camelCase (e.g., `getAttribute`, `jmxUrl`)
 - Constants: UPPER_SNAKE_CASE (e.g., `DEFAULT_TIMEOUT`)
-- Packages: lowercase (e.g., `de.rbfh`)
+- Packages: lowercase (e.g., `io.github.kibruh`)
 
 ### Types
 - Use primitives where performance matters
@@ -82,7 +82,7 @@ mvn verify
 ### Logging
 - Use java.util.logging (JUL)
 - Log at appropriate levels (SEVERE for failures, FINE for development info)
-- Default log level is SEVERE (controlled via `-Dde.rbfh.log.level`)
+- Default log level is SEVERE (controlled via `-Dio.github.kibruh.log.level`)
 - Never log sensitive data (passwords, JMX credentials)
 
 ### Documentation

@@ -1,4 +1,4 @@
-package de.rbfh;
+package io.github.kibruh;
 
 import java.util.Objects;
 

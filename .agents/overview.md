@@ -27,7 +27,7 @@ metrics of JVM-based applications.
 - **Performance Data Customization**: Supports `--uom` (unit of measure) and
   `--divisor` options for transforming values.
 - **Configurable Logging**: Uses java.util.logging with configurable level via
-  `-Dde.rbfh.log.level` system property (default: SEVERE).
+  `-Dio.github.kibruh.log.level` system property (default: SEVERE).
 
 ## Core Architecture
 

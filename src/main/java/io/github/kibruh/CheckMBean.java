@@ -1,4 +1,4 @@
-package de.rbfh;
+package io.github.kibruh;
 
 import org.apache.commons.cli.ParseException;
 import java.util.logging.ConsoleHandler;
@@ -125,7 +125,7 @@ public class CheckMBean {
     }
 
     private static void configureLogging() {
-        String logLevel = System.getProperty("de.rbfh.log.level", "SEVERE");
+        String logLevel = System.getProperty("io.github.kibruh.log.level", "SEVERE");
         Level level = Level.parse(logLevel.toUpperCase());
 
         Logger rootLogger = Logger.getLogger("");

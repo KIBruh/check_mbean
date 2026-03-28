@@ -1,4 +1,4 @@
-package de.rbfh;
+package io.github.kibruh;
 
 import org.junit.jupiter.api.Test;
 

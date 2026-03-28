@@ -1,4 +1,4 @@
-package de.rbfh;
+package io.github.kibruh;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;

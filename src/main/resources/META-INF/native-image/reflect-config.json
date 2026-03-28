@@ -1,42 +1,42 @@
 [
   {
-    "name": "de.rbfh.CheckMBean"
+    "name": "io.github.kibruh.CheckMBean"
   },
   {
-    "name": "de.rbfh.Checker"
+    "name": "io.github.kibruh.Checker"
   },
   {
-    "name": "de.rbfh.CheckerConfig"
+    "name": "io.github.kibruh.CheckerConfig"
   },
   {
-    "name": "de.rbfh.CliParser"
+    "name": "io.github.kibruh.CliParser"
   },
   {
-    "name": "de.rbfh.DefaultJmxClient"
+    "name": "io.github.kibruh.DefaultJmxClient"
   },
   {
-    "name": "de.rbfh.GaugeChecker"
+    "name": "io.github.kibruh.GaugeChecker"
   },
   {
-    "name": "de.rbfh.JmxClient"
+    "name": "io.github.kibruh.JmxClient"
   },
   {
-    "name": "de.rbfh.NaemonOutput"
+    "name": "io.github.kibruh.NaemonOutput"
   },
   {
-    "name": "de.rbfh.NaemonStatus"
+    "name": "io.github.kibruh.NaemonStatus"
   },
   {
-    "name": "de.rbfh.Range"
+    "name": "io.github.kibruh.Range"
   },
   {
-    "name": "de.rbfh.RateChecker"
+    "name": "io.github.kibruh.RateChecker"
   },
   {
-    "name": "de.rbfh.StringChecker"
+    "name": "io.github.kibruh.StringChecker"
   },
   {
-    "name": "de.rbfh.Threshold"
+    "name": "io.github.kibruh.Threshold"
   },
   {
     "name": "javax.management.ObjectName",

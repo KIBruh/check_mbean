@@ -1,4 +1,4 @@
-package de.rbfh;
+package io.github.kibruh;
 
 public enum NaemonStatus {
     OK(0, "OK"),
