@@ -272,7 +272,7 @@ public class RateChecker implements Checker {
 
     private void saveMeasurements(List<Measurement> measurements) {
         long currentTime = System.currentTimeMillis();
-        long purgeThreshold = currentTime - ((long) config.rateWindowMultiplier() * config.meanRateInterval() * 1000L);
+        long purgeThreshold = currentTime - ((long) (config.rateWindowMultiplier() + 2) * config.meanRateInterval() * 1000L);
 
         measurements.removeIf(m -> m.timestamp < purgeThreshold);
 

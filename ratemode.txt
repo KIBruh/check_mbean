@@ -6,9 +6,5 @@ The rate calculation should work as follows: if state file is ignored, make two 
 Save the measurements in the statefile, the statefile is also specified on the command line.
 save all measurements in the statefile that are newer than three times --mean-rate-interval.
 calculate all rates in "per minute".
-if the statefile is used the rate is calculated with the measurement that is nearest to the point (now - mean-rate-interval), but not older than 2 * mean-rate-interval in which case the state-file is ignored again.
-As performance data also include the current counter value in addition to the calculated rate.
-
-In this case the output should be:
-
-OK - AttributeName[.key] has a rate of $value/min (rate window [size of interval used to calculate the rate])| 'AttributeName.key'=${countervalue}c 'AttributeName.key.rate=${rate}${unit};warn;crit;;
+if the statefile is used the rate is calculated with the measurement that is nearest to the point (now - mean-rate-interval), but not older than rate-window-multiplier * mean-rate-interval in which case the state-file is ignored again.
+The statefile must not contain any data older than mean-rate-interval * ( rate-window-multiplier + 2)
