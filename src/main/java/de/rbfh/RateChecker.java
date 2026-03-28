@@ -1,9 +1,6 @@
 package de.rbfh;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,284 +8,179 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.management.remote.JMXServiceURL;
-
+/**
+ * Stateful rate checker for JMX counter attributes.
+ * Implements the logic specified in ratemode.txt.
+ */
 public class RateChecker implements Checker {
     private static final Logger logger = Logger.getLogger(RateChecker.class.getName());
 
     private final CheckerConfig config;
-    private final String statefile;
+    private final Path statePath;
 
     public RateChecker(CheckerConfig config) {
-        this.config = config;
-        this.statefile = config.statefile() != null ? config.statefile() : defaultStatefile();
-    }
-
-    private String defaultStatefile() {
-        String tempDir = System.getProperty("java.io.tmpdir");
-        String hash = generateStatefileHash();
-        String hostPort = extractHostPort(config.jmxUrl()).replace(".", "_").replace(":", "_");
-        String safeObjectName = config.objectName().replace(":", "_").replace(",", "_").replace("=", "_").replace(".", "_");
-        String safeAttribute = config.attribute().replace(".", "_");
-        return tempDir + "/check_mbean_" + hash + "_" + hostPort + "_" + safeObjectName + "_" + safeAttribute + ".state";
-    }
-
-    private String extractHostPort(String jmxUrl) {
-        try {
-            JMXServiceURL url = new JMXServiceURL(jmxUrl);
-            String host = url.getHost();
-            int port = url.getPort();
-            if (host == null || host.isEmpty() || port <= 0) {
-                return "localhost";
-            }
-            return host + ":" + port;
-        } catch (MalformedURLException e) {
-            return "localhost";
-        }
-    }
-
-    private String generateStatefileHash() {
-        String data = config.jmxUrl() + config.objectName() + config.attribute() + (config.path() != null ? config.path() : "");
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-224");
-            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.substring(0, 10);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-224 not available", e);
-        }
+        this.config = Objects.requireNonNull(config);
+        String path = config.statefile() != null ? config.statefile() : generateDefaultStatePath();
+        this.statePath = Paths.get(path);
     }
 
     @Override
     public NaemonOutput check() {
         try {
-            Optional<Object> valueOpt = config.jmxClient().getAttribute(
-                config.objectNameAsObjectName(), config.attribute(), config.path());
-
-            if (valueOpt.isEmpty()) {
-                return NaemonOutput.unknown("Could not retrieve attribute: " + config.attribute());
-            }
-
-            Object value = valueOpt.get();
-
-            if (!(value instanceof Number number)) {
-                throw new IllegalArgumentException("Attribute value is not numeric: " + value.getClass().getName());
-            }
-
-            double currentValue = number.doubleValue();
-            long currentTime = System.currentTimeMillis();
+            final long now = System.currentTimeMillis();
+            final double currentValue = fetchValue();
 
             List<Measurement> measurements = loadMeasurements();
-            boolean ignoreState = shouldIgnoreState(measurements, currentValue);
             
-            if (ignoreState) {
+            // Rule: Ignore state if counter reset (current < last)
+            if (!measurements.isEmpty() && currentValue < measurements.getLast().value()) {
+                logger.info("Counter reset detected (current: %s, last: %s). Resetting state."
+                        .formatted(currentValue, measurements.getLast().value()));
                 measurements.clear();
             }
 
-            double rate = 0;
-            long rateWindowSeconds = 0;
-
-            if (!ignoreState && hasValidState(measurements, currentTime)) {
-                Measurement rateMeasurement = findRateMeasurement(measurements, currentTime);
-                if (rateMeasurement != null) {
-                    rate = calculateRate(rateMeasurement.value, currentValue,
-                                         rateMeasurement.timestamp, currentTime);
-                    rateWindowSeconds = (currentTime - rateMeasurement.timestamp) / 1000;
-                    if (rateWindowSeconds > config.rateWindowMultiplier() * config.meanRateInterval()) {
-                        ignoreState = true;
-                        logger.log(Level.FINE, "Rate window {0}s exceeds limit, ignoring state", rateWindowSeconds);
-                    } else {
-                        logger.log(Level.FINE, "Using historical measurement: rate={0}, window={1}s", new Object[]{rate, rateWindowSeconds});
-                        measurements.add(new Measurement(currentTime, currentValue));
-                    }
-                } else {
-                    ignoreState = true;
+            // Rule: Ignore state if last measurement is too old
+            if (!measurements.isEmpty()) {
+                long lastAgeSeconds = (now - measurements.getLast().timestamp()) / 1000;
+                if (lastAgeSeconds > (long) config.rateWindowMultiplier() * config.meanRateInterval()) {
+                    logger.log(Level.FINE, "State expired (last seen %ds ago). Resetting.".formatted(lastAgeSeconds));
+                    measurements.clear();
                 }
             }
 
-            if (ignoreState || rateWindowSeconds == 0) {
-                logger.log(Level.FINE, "State ignored, performing two-point measurement");
-                measurements.clear();
-                measurements.add(new Measurement(currentTime, currentValue));
+            double rate;
+            long windowSeconds;
 
-                if (measurements.size() < 2) {
-                    logger.log(Level.INFO, "Collecting initial measurements, waiting " + config.minRateInterval() + "s for second measurement...");
-                    try {
-                        Thread.sleep(config.minRateInterval() * 1000L);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return NaemonOutput.unknown("Measurement interrupted");
-                    }
-
-                    Optional<Object> retryValueOpt = config.jmxClient().getAttribute(
-                        config.objectNameAsObjectName(), config.attribute(), config.path());
-                    if (retryValueOpt.isEmpty()) {
-                        return NaemonOutput.unknown("Could not retrieve attribute on retry");
-                    }
-
-                    Object retryValue = retryValueOpt.get();
-                    if (!(retryValue instanceof Number retryNumber)) {
-                        return NaemonOutput.unknown("Attribute is not numeric");
-                    }
-
-                    double retryValueDbl = retryNumber.doubleValue();
-                    long retryTime = System.currentTimeMillis();
-
-                    measurements.add(new Measurement(retryTime, retryValueDbl));
+            if (measurements.isEmpty()) {
+                // Rule: If state is ignored, make two measurements --min-rate-interval seconds apart
+                logger.info("Initial measurement phase. Waiting %ds for second point...".formatted(config.minRateInterval()));
+                Measurement m1 = new Measurement(now, currentValue);
+                
+                try {
+                    Thread.sleep(config.minRateInterval() * 1000L);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return NaemonOutput.unknown("Interrupted during initial measurement wait");
                 }
 
-                Measurement first = measurements.get(measurements.size() - 2);
-                Measurement second = measurements.get(measurements.size() - 1);
-                rate = calculateRate(first.value, second.value, first.timestamp, second.timestamp);
-                rateWindowSeconds = (second.timestamp - first.timestamp) / 1000;
+                long secondNow = System.currentTimeMillis();
+                double secondValue = fetchValue();
+                Measurement m2 = new Measurement(secondNow, secondValue);
+                
+                measurements.add(m1);
+                measurements.add(m2);
+                
+                rate = calculateRate(m1, m2);
+                windowSeconds = (secondNow - now) / 1000;
+            } else {
+                // Rule: Rate is calculated with the measurement nearest to (now - mean-rate-interval)
+                long targetTime = now - (config.meanRateInterval() * 1000L);
+                Measurement nearest = measurements.stream()
+                        .min(Comparator.comparingLong(m -> Math.abs(m.timestamp() - targetTime)))
+                        .orElseThrow();
+
+                rate = calculateRate(nearest, new Measurement(now, currentValue));
+                windowSeconds = (now - nearest.timestamp()) / 1000;
+                
+                measurements.add(new Measurement(now, currentValue));
             }
 
-            double divisor = config.divisor();
-            if (divisor != 1.0) {
-                rate = rate / divisor;
+            // Apply divisor if specified
+            if (config.divisor() != 1.0) {
+                rate /= config.divisor();
             }
 
-            saveMeasurements(measurements);
+            saveMeasurements(measurements, now);
 
-            NaemonStatus status = NaemonStatus.OK;
-            if (config.criticalThreshold() != null && config.criticalThreshold().isViolated(rate)) {
-                status = NaemonStatus.CRITICAL;
-            } else if (config.warningThreshold() != null && config.warningThreshold().isViolated(rate)) {
-                status = NaemonStatus.WARNING;
-            }
+            return formatOutput(rate, windowSeconds, currentValue);
 
-            String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");
-            String formattedRate = NaemonOutput.formatNumberForHuman(rate);
-            String uom = config.uom();
-            String unitSuffix = uom != null ? " " + uom : "/min";
-
-            NaemonOutput output = new NaemonOutput(status,
-                attributeLabel + " has a rate of " + formattedRate + unitSuffix + " (rate window " + rateWindowSeconds + "s)");
-
-            output.addPerfData(attributeLabel, (long) currentValue, "c", null, null);
-            output.addPerfData(attributeLabel + ".rate", rate, config.uom(), config.warningThreshold(), config.criticalThreshold());
-            output.addPerfData("check_rate_window", rateWindowSeconds, "s");
-
-            return output;
-
-        } catch (IllegalArgumentException e) {
-            logger.log(Level.SEVERE, "Invalid argument: " + e.getMessage());
-            return NaemonOutput.unknown(e.getMessage());
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "I/O error: " + e.getMessage());
-            return NaemonOutput.unknown("Connection error: " + e.getMessage());
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error: " + e.getMessage(), e);
-            return NaemonOutput.unknown("Unexpected error: " + e.getMessage());
+            logger.log(Level.SEVERE, "Rate check failed: " + e.getMessage(), e);
+            return NaemonOutput.unknown("Rate calculation error: " + e.getMessage());
         }
     }
 
-    private boolean shouldIgnoreState(List<Measurement> measurements, double currentValue) {
-        if (measurements.isEmpty()) {
-            return true;
-        }
-
-        Measurement last = measurements.get(measurements.size() - 1);
-        if (currentValue < last.value) {
-            logger.log(Level.INFO, "Counter reset detected (current=" + currentValue + ", last=" + last.value + "), ignoring state");
-            return true;
-        }
-
-        return false;
+    private double fetchValue() throws IOException {
+        return config.jmxClient()
+                .getAttribute(config.objectNameAsObjectName(), config.attribute(), config.path())
+                .filter(v -> v instanceof Number)
+                .map(v -> ((Number) v).doubleValue())
+                .orElseThrow(() -> new IOException("Attribute '%s' is missing or not numeric".formatted(config.attribute())));
     }
 
-    private boolean hasValidState(List<Measurement> measurements, long currentTime) {
-        if (measurements.isEmpty()) {
-            return false;
-        }
-
-        Measurement last = measurements.get(measurements.size() - 1);
-        long now = System.currentTimeMillis();
-        long ageSeconds = (now - last.timestamp) / 1000;
-        return ageSeconds <= config.rateWindowMultiplier() * config.meanRateInterval();
-    }
-
-    private Measurement findRateMeasurement(List<Measurement> measurements, long currentTime) {
-        long targetTime = currentTime - (config.meanRateInterval() * 1000L);
-
-        Measurement closest = null;
-        long closestDiff = Long.MAX_VALUE;
-
-        for (Measurement m : measurements) {
-            long diff = Math.abs(m.timestamp - targetTime);
-            if (diff < closestDiff) {
-                closestDiff = diff;
-                closest = m;
-            }
-        }
-
-        return closest;
-    }
-
-    private double calculateRate(double oldValue, double newValue, long oldTime, long newTime) {
-        long deltaTimeSeconds = (newTime - oldTime) / 1000;
-        if (deltaTimeSeconds <= 0) {
-            return 0;
-        }
-
-        double deltaValue = newValue - oldValue;
-        return (deltaValue / deltaTimeSeconds) * 60;
+    private double calculateRate(Measurement m1, Measurement m2) {
+        double deltaVal = m2.value() - m1.value();
+        double deltaSec = (m2.timestamp() - m1.timestamp()) / 1000.0;
+        return (deltaSec > 0) ? (deltaVal / deltaSec) * 60.0 : 0.0;
     }
 
     private List<Measurement> loadMeasurements() {
-        List<Measurement> measurements = new ArrayList<>();
-        Path path = Paths.get(statefile);
-
-        if (!Files.exists(path)) {
-            return measurements;
+        if (!Files.exists(statePath)) return new ArrayList<>();
+        try (var lines = Files.lines(statePath)) {
+            return lines.map(String::trim)
+                    .filter(l -> !l.isEmpty())
+                    .map(l -> l.split("\\s+"))
+                    .filter(p -> p.length == 2)
+                    .map(p -> new Measurement(Long.parseLong(p[0]), Double.parseDouble(p[1])))
+                    .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        } catch (Exception e) {
+            logger.warning("Could not read state file %s: %s".formatted(statePath, e.getMessage()));
+            return new ArrayList<>();
         }
+    }
 
-        try (BufferedReader reader = Files.newBufferedReader(path)) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.trim().split("\\s+", 2);
-                if (parts.length == 2) {
-                    try {
-                        long timestamp = Long.parseLong(parts[0]);
-                        double value = Double.parseDouble(parts[1]);
-                        measurements.add(new Measurement(timestamp, value));
-                    } catch (NumberFormatException e) {
-                        logger.log(Level.WARNING, "Invalid measurement line: " + line);
-                    }
-                }
-            }
+    private void saveMeasurements(List<Measurement> measurements, long now) {
+        // Rule: save all measurements ... newer than three times --mean-rate-interval
+        // Rule: statefile must not contain any data older than mean-rate-interval * (multiplier + 2)
+        long hardLimit = now - ((long) config.meanRateInterval() * (config.rateWindowMultiplier() + 2) * 1000L);
+        
+        List<String> lines = measurements.stream()
+                .filter(m -> m.timestamp() >= hardLimit)
+                .map(m -> "%d %s".formatted(m.timestamp(), NaemonOutput.formatNumber(m.value())))
+                .toList();
+
+        try {
+            Files.write(statePath, lines, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not load state file: " + e.getMessage());
-        }
-
-        return measurements;
-    }
-
-    private void saveMeasurements(List<Measurement> measurements) {
-        long currentTime = System.currentTimeMillis();
-        long purgeThreshold = currentTime - ((long) (config.rateWindowMultiplier() + 2) * config.meanRateInterval() * 1000L);
-
-        measurements.removeIf(m -> m.timestamp < purgeThreshold);
-
-        Path path = Paths.get(statefile);
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-            for (Measurement m : measurements) {
-                writer.write(m.timestamp + " " + NaemonOutput.formatNumber(m.value));
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not save state file: " + e.getMessage());
+            logger.warning("Could not write state file %s: %s".formatted(statePath, e.getMessage()));
         }
     }
 
-    private record Measurement(long timestamp, double value) {
+    private NaemonOutput formatOutput(double rate, long window, double rawValue) {
+        NaemonStatus status = NaemonStatus.OK;
+        if (config.criticalThreshold() != null && config.criticalThreshold().isViolated(rate)) {
+            status = NaemonStatus.CRITICAL;
+        } else if (config.warningThreshold() != null && config.warningThreshold().isViolated(rate)) {
+            status = NaemonStatus.WARNING;
+        }
+
+        String attr = config.attribute() + (config.path() != null ? "." + config.path() : "");
+        String uom = config.uom() != null ? config.uom() : "/min";
+        String message = "%s rate is %s %s (window %ds)".formatted(attr, NaemonOutput.formatNumberForHuman(rate), uom, window);
+
+        return new NaemonOutput(status, message)
+                .addPerfData(attr, rawValue, "c")
+                .addPerfData(attr + ".rate", rate, config.uom(), config.warningThreshold(), config.criticalThreshold())
+                .addPerfData("check_rate_window", window, "s");
     }
+
+    private String generateDefaultStatePath() {
+        String key = config.jmxUrl() + config.objectName() + config.attribute() + Objects.toString(config.path(), "");
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(key.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (int i = 0; i < 8; i++) hex.append("%02x".formatted(hash[i]));
+            return System.getProperty("java.io.tmpdir") + "/check_mbean_" + hex + ".state";
+        } catch (NoSuchAlgorithmException e) {
+            return System.getProperty("java.io.tmpdir") + "/check_mbean_fallback.state";
+        }
+    }
+
+    private record Measurement(long timestamp, double value) {}
 }
