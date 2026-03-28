@@ -281,7 +281,7 @@ public class RateChecker implements Checker {
         Path path = Paths.get(statefile);
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             for (Measurement m : measurements) {
-                writer.write(m.timestamp + " " + m.value);
+                writer.write(m.timestamp + " " + NaemonOutput.formatNumber(m.value));
                 writer.newLine();
             }
         } catch (IOException e) {
