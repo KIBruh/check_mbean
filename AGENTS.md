@@ -80,8 +80,9 @@ mvn verify
 - Throw specific exceptions (e.g., `IllegalArgumentException` not `RuntimeException`)
 
 ### Logging
-- Use a logger (SLF4J)
-- Log at appropriate levels (ERROR for failures, DEBUG for development info)
+- Use java.util.logging (JUL)
+- Log at appropriate levels (SEVERE for failures, FINE for development info)
+- Default log level is SEVERE (controlled via `-Dde.rbfh.log.level`)
 - Never log sensitive data (passwords, JMX credentials)
 
 ### Documentation
@@ -102,15 +103,21 @@ mvn verify
 - **`CliParser`**: Command-line argument parsing (Apache Commons CLI, long-options only)
 - **`JmxClient`**: JMX connection lifecycle and attribute reading
 - **`Checker` interface**: Common interface for monitoring modes
-  - `GaugeChecker`: Numeric comparisons
-  - `RateChecker`: Counter-based rate calculation
-  - `StringChecker`: Regex-based string matching
-- **`Range` & `Threshold`**: Naemon threshold parsing and evaluation
+  - `GaugeChecker`: Numeric comparisons with divisor and uom support
+  - `RateChecker`: Counter-based rate calculation with stateful history
+  - `StringChecker`: Regex-based string matching with negation support
+  - `fetch` mode: Raw value retrieval (not a Naemon plugin)
+- **`CheckerConfig`**: Configuration record shared by all checkers
+- **`Range` & `Threshold`**: Naemon threshold parsing and evaluation (as Java records)
 - **`NaemonOutput`**: Output formatting (status messages, performance data)
+  - `formatNumber()`: Full precision for performance data
+  - `formatNumberForHuman()`: Max 3 decimal places for human-readable messages
 
 ### Output Requirements
 - All numeric values must use plain decimal notation (no scientific notation)
 - Example: `104012344` not `1.04E8`
+- Human-readable messages: max 3 decimal places
+- Performance data: full precision
 - Follow Naemon plugin performance data format
 
 ### Threshold Specification
@@ -122,8 +129,10 @@ mvn verify
 ### Rate Mode
 - Uses state file for historical measurements
 - Calculates rate per minute
-- Handles counter resets
+- Handles counter resets (clears statefile)
 - Two-point measurement when historical data unavailable
+- State is valid if last measurement age <= 2 * mean-rate-interval
+- Uses historical data if rate window <= 2 * mean-rate-interval
 - Purge measurements older than 3 * mean-rate-interval
 
 ## Existing Documentation

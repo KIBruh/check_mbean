@@ -14,15 +14,37 @@ The `StringChecker` class performs the monitoring logic:
      **regular expressions**, not numeric ranges.
    - The plugin uses `java.util.regex.Pattern` to check if the current value
      *contains* a match for the provided regex.
-3. **Status Evaluation**:
-   - If the `--critical` regex matches, the status is `CRITICAL`.
-   - If only the `--warning` regex matches, the status is `WARNING`.
-   - If neither regex matches (or no thresholds are provided), the status is
+3. **Negation Support**:
+   - If the regex starts with `!` or `~`, the match is negated.
+   - `--critical ~error` or `--critical !error` triggers CRITICAL if the value
+     does NOT match the regex.
+4. **Status Evaluation**:
+   - If the `--critical` regex matches (or doesn't match, if negated), the
+     status is `CRITICAL`.
+   - If only the `--warning` regex matches (or doesn't match, if negated), the
+     status is `WARNING`.
+   - If neither regex matches (or both match when they shouldn't), the status is
      `OK`.
-4. **Formatting**: The status message includes the attribute's actual value in
-   single quotes for clarity.
+5. **Performance Data**: Only execution time is included (no value in perf data).
 
 ## Example
 
-If you monitor a `Status` attribute and set `--critical "^ERROR"`, any value
-starting with "ERROR" will trigger a critical alert.
+```bash
+# Alert if status contains ERROR
+check_mbean --url localhost:9999 --object-name com.example:type=Server \
+  --attribute State --mode string --critical "ERROR"
+
+# Alert if status does NOT contain OK
+check_mbean --url localhost:9999 --object-name com.example:type=Server \
+  --attribute State --mode string --critical "~OK"
+
+# Warning if contains WARNING, critical if contains ERROR
+check_mbean --url localhost:9999 --object-name com.example:type=Server \
+  --attribute State --mode string --warning "WARNING" --critical "ERROR"
+```
+
+Output:
+```
+CRITICAL - Value is 'ERROR: Service failed' | 'time'=0.015s;;;
+OK - Value is 'All good' | 'time'=0.012s;;;
+```

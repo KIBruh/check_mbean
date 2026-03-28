@@ -6,38 +6,58 @@ typically expressed in "units per minute."
 
 ## Implementation Details: `RateChecker`
 
-The `RateChecker` implements complex logic based on the `ratemode.txt`
-specification:
+The `RateChecker` implements complex logic for rate calculation:
 
 1. **State Management**:
-   - It uses a state file (either auto-generated in `/tmp` or specified via
+   - Uses a state file (either auto-generated in `/tmp` or specified via
      `--statefile`) to store timestamped measurements.
+   - Auto-generated statefiles follow the pattern:
+     `check_mbean_<hash>_<host>_<port>_<objectname>_<attribute>.state`
    - Measurements are stored as `timestamp value` pairs.
    - Old data is purged: only measurements newer than `3 * mean-rate-interval`
      are kept.
+   - If the last measurement age exceeds `2 * mean-rate-interval`, the state is
+     considered invalid and fresh measurements are taken.
+
 2. **Rate Calculation**:
    - **Counter Reset Detection**: If the current counter value is smaller than
-     the last stored measurement, the state is ignored, and a new two-point
-     measurement is triggered.
+     the last stored measurement, the state is cleared and ignored.
    - **Two-Point Measurement**: If no valid state is available, the plugin makes
      two measurements separated by at least `--min-rate-interval` seconds. This
      ensures an accurate initial rate.
    - **Historical Data Usage**: If valid state exists, the plugin finds the
-     measurement closest to `now - mean-rate-interval`, provided it's not older
-     than `2 * mean-rate-interval`.
+     measurement closest to `now - mean-rate-interval`, provided the rate window
+     doesn't exceed `2 * mean-rate-interval`.
+
 3. **Per-Minute Calculation**:
    - The rate is always calculated per minute:
      `rate = (deltaValue / deltaTimeSeconds) * 60`.
+   - If `--divisor` is specified, the rate is divided before threshold check
+     and in output.
+
 4. **Performance Data**:
    - Includes both the current absolute counter value (`c` unit) and the
-     calculated rate (`/min` unit).
-   - All numeric values are formatted to avoid scientific notation (e.g.,
-     `104012344` instead of `1.04E8`).
+     calculated rate.
+   - If `--uom` is specified, uses that unit instead of `/min`.
+   - Human-readable output shows max 3 decimal places; performance data uses
+     full precision.
    - Thresholds are applied to the *calculated rate*, not the absolute counter.
 
-## Key Logic
+## Example
 
-- If state file is used, rate window is shown in the output (e.g.,
-  `rate window 305s`).
-- If state file is ignored, the plugin pauses for `--min-rate-interval` seconds
-  to get a valid rate.
+```bash
+# Basic rate monitoring
+check_mbean --url localhost:9999 --object-name com.example:type=Requests \
+  --attribute TotalCount --mode rate --warning 1000 --critical 2000 \
+  --min-rate-interval 5 --mean-rate-interval 15
+
+# With unit and divisor
+check_mbean --url localhost:9999 --object-name com.example:type=Requests \
+  --attribute TotalCount --mode rate --uom MB/s --divisor 1048576 \
+  --warning 10 --critical 20 --min-rate-interval 5 --mean-rate-interval 15
+```
+
+Output:
+```
+OK - Value has a rate of 1.5 MB/s (rate window 15s) | 'Value.rate'=1.5;0:10;0:20;;MB/s 'time'=0.015s;;;
+```

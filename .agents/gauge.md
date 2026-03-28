@@ -14,8 +14,10 @@ The `GaugeChecker` class implements the logic for this mode:
 2. **Type Validation**: The retrieved value must be an instance of
    `java.lang.Number`. If the value is not numeric, the checker throws an
    `IllegalArgumentException`, which is caught and reported as `UNKNOWN` status.
-3. **Threshold Comparison**: The value is compared against the parsed warning
-   and critical threshold ranges:
+3. **Divisor Application**: If `--divisor` is specified, the value is divided
+   before threshold comparison and in output.
+4. **Threshold Comparison**: The (possibly divided) value is compared against the
+   parsed warning and critical threshold ranges:
    - **Critical check first**: If a critical threshold is provided and the
      value is outside its range (or inside if `@` is used), the status becomes
      `CRITICAL`.
@@ -23,14 +25,28 @@ The `GaugeChecker` class implements the logic for this mode:
      threshold is provided, the value is checked against it. If it fails, the
      status becomes `WARNING`.
    - **Default**: If neither threshold is breached, the status remains `OK`.
-4. **Formatting**: The value is converted to a plain decimal string using
-   `NaemonOutput.formatNumber`, ensuring large numbers do not appear in
-   scientific notation (e.g., `104012344` instead of `1.04E8`).
-5. **Performance Data**: The numeric value is included in the Naemon output as
-   performance data, also formatted to avoid scientific notation, and includes
-   any relevant thresholds.
+5. **Formatting**:
+   - Human-readable output: Uses `NaemonOutput.formatNumberForHuman` which shows
+     max 3 decimal places (e.g., `123.456`).
+   - Performance data: Uses full precision via `NaemonOutput.formatNumber`.
+6. **Performance Data**: Includes the numeric value (with optional `--uom` unit),
+   warning/critical thresholds, and execution time. The `--uom` option adds a
+   unit string to both the message and performance data.
 
 ## Example
 
-If `--warning 80` and `--critical 90` are set, and the current value is `85`,
-the `GaugeChecker` will return a `WARNING` status.
+```bash
+# Basic gauge monitoring
+check_mbean --url localhost:9999 --object-name java.lang:type=Memory \
+  --attribute HeapMemoryUsage --path used --warning 80 --critical 90
+
+# With unit of measure and divisor (value in bytes, display in MB)
+check_mbean --url localhost:9999 --object-name java.lang:type=Memory \
+  --attribute HeapMemoryUsage --path used --uom MB --divisor 1048576 \
+  --warning 80 --critical 90
+```
+
+Output:
+```
+OK - Value is 256 MB | 'Value'=256;0:80;0:90;;MB 'time'=0.015s;;;
+```

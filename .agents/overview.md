@@ -8,9 +8,12 @@ metrics of JVM-based applications.
 ## Key Features
 
 - **JMX Remote Connectivity**: Securely connects to remote JVMs using standard
-  JMX Service URLs.
-- **Multiple Monitoring Modes**: Supports `gauge` (numeric comparisons),
-  `rate` (counter-based rate calculation), and `string` (regex-based matching).
+  JMX Service URLs. Supports both full URLs and shorthand `host:port` syntax.
+- **Multiple Monitoring Modes**: Supports:
+  - `gauge`: numeric value monitoring with thresholds
+  - `rate`: counter-based rate calculation with stateful history
+  - `string`: regex-based pattern matching with negation support
+  - `fetch`: raw value retrieval (not a Naemon plugin)
 - **Naemon Standard Thresholds**: Fully implements the Naemon threshold range
   specification, including inversion (`@`) and infinity (`~`).
 - **Composite Data Support**: Allows drilling into complex `CompositeData`
@@ -19,9 +22,12 @@ metrics of JVM-based applications.
   performs two-point measurements when historical data is unavailable.
 - **Native Image Support**: Can be compiled into a standalone native binary
   using GraalVM for near-instant startup and minimal memory footprint.
-- **Human-Readable Output**: Ensures all numeric values (both in status messages
-  and performance data) are formatted using plain decimal notation, avoiding
-  confusing scientific notation (e.g., `104012344` instead of `1.04E8`).
+- **Human-Readable Output**: All numeric values in status messages use max 3
+  decimal places. Performance data uses full precision.
+- **Performance Data Customization**: Supports `--uom` (unit of measure) and
+  `--divisor` options for transforming values.
+- **Configurable Logging**: Uses java.util.logging with configurable level via
+  `-Dde.rbfh.log.level` system property (default: SEVERE).
 
 ## Core Architecture
 
@@ -35,11 +41,32 @@ The plugin follows a modular design for high maintainability:
   attribute reading logic.
 - **`Checker` Interface**: A common interface for all monitoring modes
   (`GaugeChecker`, `RateChecker`, `StringChecker`).
+- **`CheckerConfig`**: Record containing configuration shared across all checkers.
 - **`Range` & `Threshold`**: Encapsulate the complex Naemon threshold parsing
-  and evaluation logic.
+  and evaluation logic (as Java records).
 - **`NaemonOutput` & `NaemonStatus`**: Standardize the formatting of status
-  messages and performance data, including a specialized formatter to prevent
-  scientific notation in numeric outputs.
+  messages and performance data.
+
+## CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `--url` | JMX Service URL or shorthand `host:port` |
+| `--object-name` | MBean object name (e.g., `java.lang:type=Memory`) |
+| `--attribute` | MBean attribute name |
+| `--path` | Path into CompositeData (optional) |
+| `--mode` | Monitoring mode: `gauge`, `rate`, `string`, `fetch` (default: `gauge`) |
+| `--uom` | Unit of measure for performance data (e.g., `B`, `KB`, `MB/s`) |
+| `--divisor` | Divide value before threshold check and output |
+| `--warning` | Warning threshold (range or regex depending on mode) |
+| `--critical` | Critical threshold (range or regex depending on mode) |
+| `--statefile` | Path to state file for rate mode |
+| `--mean-rate-interval` | Mean rate interval in seconds (default: 300) |
+| `--min-rate-interval` | Minimum interval between measurements (default: 60) |
+| `--username` | JMX authentication username |
+| `--password` | JMX authentication password |
+| `--timeout` | Connection timeout in seconds (default: 60) |
+| `--help` | Print help message |
 
 ## Documentation
 
