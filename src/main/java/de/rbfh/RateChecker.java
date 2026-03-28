@@ -175,7 +175,7 @@ public class RateChecker implements Checker {
 
             output.addPerfData(attributeLabel, (long) currentValue, "c", null, null);
             output.addPerfData(attributeLabel + ".rate", rate, config.uom(), config.warningThreshold(), config.criticalThreshold());
-            output.addPerfData(attributeLabel + ".check_rate_window", rateWindowSeconds, "");
+            output.addPerfData("check_rate_window", rateWindowSeconds, "s");
 
             return output;
 
