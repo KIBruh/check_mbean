@@ -131,9 +131,10 @@ mvn verify
 - Calculates rate per minute
 - Handles counter resets (clears statefile)
 - Two-point measurement when historical data unavailable
-- State is valid if last measurement age <= 2 * mean-rate-interval
-- Uses historical data if rate window <= 2 * mean-rate-interval
-- Purge measurements older than 3 * mean-rate-interval
+- State is valid if last measurement age <= rate-window-multiplier * mean-rate-interval (default 3)
+- Purge measurements older than (rate-window-multiplier + 2) * mean-rate-interval
+- Saves all measurements within time window (not just two)
+- Statefile values saved in plain decimal format (no scientific notation)
 
 ## Existing Documentation
 
