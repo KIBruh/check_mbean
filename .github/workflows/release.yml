@@ -24,10 +24,14 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: 'maven'
 
+      - name: Install musl (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
       - name: Build Release Artifacts
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then
-            mvn -B -Pnative package -Dnative-image.buildArgs=--static-nolibc
+            mvn -B -Pnative package -Dnative-image.buildArgs="--static --libc=musl"
           else
             mvn -B -Pnative package
           fi

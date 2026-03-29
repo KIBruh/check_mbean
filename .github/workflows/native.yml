@@ -20,8 +20,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: 'maven'
 
+      - name: Install musl
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
       - name: Build Native Image
-        run: mvn -B -Pnative package -Dnative-image.buildArgs=--static-nolibc
+        run: mvn -B -Pnative package -Dnative-image.buildArgs="--static --libc=musl"
         
       - name: Upload Native Binary
         uses: actions/upload-artifact@v4
