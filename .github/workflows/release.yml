@@ -25,7 +25,12 @@ jobs:
           cache: 'maven'
 
       - name: Build Release Artifacts
-        run: mvn -B -Pnative package
+        run: |
+          if [ "${{ runner.os }}" == "Linux" ]; then
+            mvn -B -Pnative package -Dnative-image.buildArgs=--static-nolibc
+          else
+            mvn -B -Pnative package
+          fi
 
       - name: Rename Native Binary (Unix)
         if: runner.os != 'Windows'

@@ -44,6 +44,9 @@ mvn verify
 
 # Build GraalVM Native Image (requires GraalVM)
 mvn -Pnative package
+
+# Build Mostly-Static Native Image for Linux (better portability)
+mvn -Pnative package -Dnative-image.buildArgs=--static-nolibc
 ```
 
 ### Running the Plugin
