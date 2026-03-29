@@ -1,20 +1,8 @@
 package io.github.kibruh;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
 import java.util.Objects;
 
 public class NaemonOutput {
-    private static final DecimalFormat PLAIN_FORMAT = createPlainFormat();
-
-    private static DecimalFormat createPlainFormat() {
-        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.US);
-        DecimalFormat format = new DecimalFormat("0.##########", symbols);
-        format.setGroupingUsed(false);
-        return format;
-    }
-
     private final NaemonStatus status;
     private final String message;
     private final StringBuilder perfData;
@@ -33,7 +21,7 @@ public class NaemonOutput {
         perfData.append("'");
         perfData.append(escapePerfDataLabel(label));
         perfData.append("'=");
-        perfData.append(formatNumber(value));
+        perfData.append(FormatUtils.formatNumber(value));
         if (unit != null && !unit.isEmpty()) {
             perfData.append(unit);
         }
@@ -58,51 +46,18 @@ public class NaemonOutput {
             perfData.append(" ");
         }
         perfData.append("'time'=");
-        perfData.append(formatNumber(seconds));
+        perfData.append(FormatUtils.formatNumber(seconds));
         perfData.append("s");
         perfData.append(";;;");
         return this;
     }
 
     public static String formatNumber(Number value) {
-        if (value == null) {
-            return "0";
-        }
-
-        if (value instanceof Double || value instanceof Float) {
-            double d = value.doubleValue();
-            if (Double.isNaN(d) || Double.isInfinite(d)) {
-                return "0";
-            }
-            if (d == (long) d && Math.abs(d) < Long.MAX_VALUE) {
-                return String.format(Locale.US, "%d", (long) d);
-            }
-        }
-
-        if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
-            return PLAIN_FORMAT.format(value.longValue());
-        }
-
-        return PLAIN_FORMAT.format(value.doubleValue());
-    }
-
-    private static final DecimalFormat HUMAN_FORMAT = createHumanFormat();
-
-    private static DecimalFormat createHumanFormat() {
-        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.US);
-        DecimalFormat format = new DecimalFormat("0.###", symbols);
-        format.setGroupingUsed(false);
-        return format;
+        return FormatUtils.formatNumber(value);
     }
 
     public static String formatNumberForHuman(double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-            return "0";
-        }
-        if (value == (long) value && Math.abs(value) < Long.MAX_VALUE) {
-            return String.format(Locale.US, "%d", (long) value);
-        }
-        return HUMAN_FORMAT.format(value);
+        return FormatUtils.formatNumberForHuman(value);
     }
 
     private static String escapePerfDataLabel(String label) {

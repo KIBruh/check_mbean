@@ -77,6 +77,18 @@ class NaemonOutputTest {
     }
 
     @Test
+    void testPerfDataWithInvertedThresholds() {
+        Threshold warn = Threshold.parse("@10:50", NaemonStatus.WARNING);
+        Threshold crit = Threshold.parse("@50:100", NaemonStatus.CRITICAL);
+        
+        NaemonOutput output = new NaemonOutput(NaemonStatus.OK, "Value is 25");
+        output.addPerfData("myvalue", 25, "", warn, crit);
+        
+        String result = output.build();
+        assertTrue(result.contains(";@10:50;@50:100;;"));
+    }
+
+    @Test
     void testPerfDataWithUnit() {
         NaemonOutput output = new NaemonOutput(NaemonStatus.OK, "Memory is 1024");
         output.addPerfData("memory", 1024, "B");

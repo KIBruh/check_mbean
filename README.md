@@ -26,21 +26,23 @@ check_mbean --url <JMX_URL> --object-name <NAME> --attribute <ATTR> [options]
 
 **Monitor Heap Memory (Gauge):**
 ```bash
+# Alert if used heap memory exceeds 1GB/2GB
 check_mbean --url localhost:9999 --object-name java.lang:type=Memory \
-  --attribute HeapMemoryUsage --path used --warning 1073741824 --critical 2147483648
+  --attribute HeapMemoryUsage --path used --warning 1073741824 --critical 2147483648 --uom B
 ```
 
-**Monitor Request Rate (Counter):**
+**Monitor Process CPU Usage (Rate):**
 ```bash
-check_mbean --url service:jmx:rmi:///jndi/rmi://host:9999/jmxrmi \
-  --object-name com.example:type=Requests --attribute TotalCount \
-  --mode rate --warning 1000 --critical 2000
+# Calculate CPU time in seconds per minute (divisor converts nanos to seconds)
+check_mbean --url localhost:9999 --object-name java.lang:type=OperatingSystem \
+  --attribute ProcessCpuTime --mode rate --divisor 1000000000 --warning 45 --critical 55
 ```
 
-**Check Server State (String):**
+**Check JVM Vendor (String):**
 ```bash
-check_mbean --url localhost:9999 --object-name com.example:type=Server \
-  --attribute State --mode string --critical "^DOWN$"
+# Alert if the JVM vendor is NOT Oracle or Eclipse Foundation
+check_mbean --url localhost:9999 --object-name java.lang:type=Runtime \
+  --attribute VmVendor --mode string --critical "!Oracle|Eclipse"
 ```
 
 ## Installation
@@ -67,12 +69,18 @@ The resulting artifacts will be in the `target/` directory.
 | `--url` | JMX Service URL or `host:port` shorthand | (Required) |
 | `--object-name` | MBean ObjectName | (Required) |
 | `--attribute` | MBean Attribute name | (Required) |
+| `--path` | Nested path for CompositeData (e.g., `used`) | |
 | `--mode` | `gauge`, `rate`, `string`, `fetch` | `gauge` |
 | `--warning` | Warning threshold (range or regex) | |
 | `--critical` | Critical threshold (range or regex) | |
-| `--divisor` | Divide the fetched value by this number | `1` |
+| `--divisor` | Divide fetched value (e.g., 1024 for KB) | `1` |
 | `--uom` | Unit of measure for performance data | |
 | `--statefile` | Path to state file (Rate mode only) | `/tmp/*.state` |
+| `--mean-rate-interval`| Mean rate window in seconds | `300` |
+| `--min-rate-interval` | Minimum time between measurements | `60` |
+| `--rate-window-multiplier`| Multiplier for state validity | `3` |
+| `--username` | JMX authentication username | |
+| `--password` | JMX authentication password | |
 | `--timeout` | Connection timeout in seconds | `60` |
 
 ## License

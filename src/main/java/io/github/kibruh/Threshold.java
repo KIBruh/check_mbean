@@ -21,30 +21,7 @@ public record Threshold(Range range, NaemonStatus status) {
     }
 
     public String formatForPerfData() {
-        if (range().start() == Double.NEGATIVE_INFINITY && range().end() == Double.POSITIVE_INFINITY) {
-            return "";
-        }
-        if (range().start() == Double.NEGATIVE_INFINITY) {
-            return "~:" + formatEnd(range().end());
-        }
-        if (range().end() == Double.POSITIVE_INFINITY) {
-            return formatStart(range().start()) + ":";
-        }
-        return formatStart(range().start()) + ":" + formatEnd(range().end());
-    }
-
-    private String formatStart(double value) {
-        if (value == (long) value) {
-            return String.format("%d", (long) value);
-        }
-        return String.format("%s", value);
-    }
-
-    private String formatEnd(double value) {
-        if (value == (long) value) {
-            return String.format("%d", (long) value);
-        }
-        return String.format("%s", value);
+        return range().formatForPerfData();
     }
 
     @Override

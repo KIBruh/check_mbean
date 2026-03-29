@@ -71,30 +71,40 @@ public record Range(double start, double end, boolean invert, boolean startInclu
         return invert() ? !inside : inside;
     }
 
+    /**
+     * Formats the range for performance data output.
+     * Returns empty string if the range is -inf to +inf.
+     *
+     * @return A string representation of the range.
+     */
+    public String formatForPerfData() {
+        if (start() == Double.NEGATIVE_INFINITY && end() == Double.POSITIVE_INFINITY) {
+            return "";
+        }
+        return toString();
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         if (invert()) {
             sb.append("@");
         }
+
         if (start() == Double.NEGATIVE_INFINITY) {
             sb.append("~");
         } else {
-            sb.append(formatNumber(start()));
+            sb.append(FormatUtils.formatNumber(start()));
         }
+
         sb.append(":");
+
         if (end() == Double.POSITIVE_INFINITY) {
             sb.append("~");
         } else {
-            sb.append(formatNumber(end()));
+            sb.append(FormatUtils.formatNumber(end()));
         }
-        return sb.toString();
-    }
 
-    private static String formatNumber(double value) {
-        if (value == (long) value) {
-            return String.format("%d", (long) value);
-        }
-        return String.format("%s", value);
+        return sb.toString();
     }
 }

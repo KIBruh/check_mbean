@@ -60,13 +60,6 @@ public class CliParser {
                 .build());
 
         opts.addOption(Option.builder()
-                .longOpt("min-rate-interval")
-                .hasArg()
-                .argName("SECONDS")
-                .desc("Minimum interval between measurements for rate mode (default: 60)")
-                .build());
-
-        opts.addOption(Option.builder()
                 .longOpt("rate-window-multiplier")
                 .hasArg()
                 .argName("MULTIPLIER")
@@ -159,19 +152,16 @@ public class CliParser {
         System.out.println();
         System.out.println("Examples:");
         System.out.println("  # Gauge mode - monitor heap memory usage");
-        System.out.println("  check_mbean --url service:jmx:rmi:///jndi/rmi://host:9999/jmxrmi \\");
-        System.out.println("    --object-name java.lang:type=Memory --attribute HeapMemoryUsage \\");
-        System.out.println("    --path used --warning 100000000 --critical 200000000");
+        System.out.println("  check_mbean --url localhost:9999 --object-name java.lang:type=Memory \\");
+        System.out.println("    --attribute HeapMemoryUsage --path used --warning 1073741824 --critical 2147483648 --uom B");
         System.out.println();
-        System.out.println("  # Rate mode - monitor request counter rate");
-        System.out.println("  check_mbean --url service:jmx:rmi:///jndi/rmi://host:9999/jmxrmi \\");
-        System.out.println("    --object-name com.example:type=Requests --attribute TotalCount \\");
-        System.out.println("    --mode rate --warning 1000 --critical 2000");
+        System.out.println("  # Rate mode - monitor CPU seconds per minute");
+        System.out.println("  check_mbean --url localhost:9999 --object-name java.lang:type=OperatingSystem \\");
+        System.out.println("    --attribute ProcessCpuTime --mode rate --divisor 1000000000 --warning 45 --critical 55");
         System.out.println();
-        System.out.println("  # String mode - check server status");
-        System.out.println("  check_mbean --url service:jmx:rmi:///jndi/rmi://host:9999/jmxrmi \\");
-        System.out.println("    --object-name com.example:type=Server --attribute State \\");
-        System.out.println("    --mode string --critical \"^DOWN$\"");
+        System.out.println("  # String mode - alert if JVM vendor is not Oracle or Eclipse");
+        System.out.println("  check_mbean --url localhost:9999 --object-name java.lang:type=Runtime \\");
+        System.out.println("    --attribute VmVendor --mode string --critical \"!Oracle|Eclipse\"");
     }
 
     public boolean hasHelp() {
