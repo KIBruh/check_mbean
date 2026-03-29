@@ -59,41 +59,16 @@ public class CheckMBean {
 
     private static Checker createChecker(CliParser parser, JmxClient jmxClient) {
         String mode = parser.getMode().toLowerCase();
+        boolean isStringMode = "string".equals(mode);
 
         Threshold warningThreshold = null;
         Threshold criticalThreshold = null;
-        boolean warningNegated = false;
-        boolean criticalNegated = false;
-        String warningRegex = null;
-        String criticalRegex = null;
 
-        if ("string".equals(mode)) {
-            String warnArg = parser.getWarningThreshold();
-            if (warnArg != null && !warnArg.isEmpty()) {
-                if (warnArg.startsWith("!") || warnArg.startsWith("~")) {
-                    warningNegated = true;
-                    warningRegex = warnArg.substring(1);
-                } else {
-                    warningRegex = warnArg;
-                }
-            }
-
-            String critArg = parser.getCriticalThreshold();
-            if (critArg != null && !critArg.isEmpty()) {
-                if (critArg.startsWith("!") || critArg.startsWith("~")) {
-                    criticalNegated = true;
-                    criticalRegex = critArg.substring(1);
-                } else {
-                    criticalRegex = critArg;
-                }
-            }
-        } else {
-            if (parser.getWarningThreshold() != null) {
-                warningThreshold = Threshold.parse(parser.getWarningThreshold(), NaemonStatus.WARNING);
-            }
-            if (parser.getCriticalThreshold() != null) {
-                criticalThreshold = Threshold.parse(parser.getCriticalThreshold(), NaemonStatus.CRITICAL);
-            }
+        if (parser.getWarningThreshold() != null) {
+            warningThreshold = Threshold.parse(parser.getWarningThreshold(), NaemonStatus.WARNING, isStringMode);
+        }
+        if (parser.getCriticalThreshold() != null) {
+            criticalThreshold = Threshold.parse(parser.getCriticalThreshold(), NaemonStatus.CRITICAL, isStringMode);
         }
 
         CheckerConfig config = new CheckerConfig(
@@ -108,10 +83,6 @@ public class CheckMBean {
                 parser.getRateWindowMultiplier(),
                 warningThreshold,
                 criticalThreshold,
-                warningRegex,
-                criticalRegex,
-                warningNegated,
-                criticalNegated,
                 parser.getUom(),
                 parser.getDivisor()
         );

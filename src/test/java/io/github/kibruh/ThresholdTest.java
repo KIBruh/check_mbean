@@ -8,7 +8,7 @@ class ThresholdTest {
 
     @Test
     void testViolation_DefaultRange_InsideNotViolated() {
-        Threshold threshold = Threshold.parse("100:200", NaemonStatus.WARNING);
+        Threshold threshold = Threshold.parse("100:200", NaemonStatus.WARNING, false);
         
         assertFalse(threshold.isViolated(100));
         assertFalse(threshold.isViolated(150));
@@ -17,7 +17,7 @@ class ThresholdTest {
 
     @Test
     void testViolation_DefaultRange_OutsideViolates() {
-        Threshold threshold = Threshold.parse("100:200", NaemonStatus.WARNING);
+        Threshold threshold = Threshold.parse("100:200", NaemonStatus.WARNING, false);
         
         assertTrue(threshold.isViolated(50));
         assertTrue(threshold.isViolated(250));
@@ -25,7 +25,7 @@ class ThresholdTest {
 
     @Test
     void testViolation_InvertedRange_InsideViolates() {
-        Threshold threshold = Threshold.parse("@100:200", NaemonStatus.CRITICAL);
+        Threshold threshold = Threshold.parse("@100:200", NaemonStatus.CRITICAL, false);
         
         assertTrue(threshold.isViolated(100));
         assertTrue(threshold.isViolated(150));
@@ -34,7 +34,7 @@ class ThresholdTest {
 
     @Test
     void testViolation_InvertedRange_OutsideNotViolated() {
-        Threshold threshold = Threshold.parse("@100:200", NaemonStatus.CRITICAL);
+        Threshold threshold = Threshold.parse("@100:200", NaemonStatus.CRITICAL, false);
         
         assertFalse(threshold.isViolated(50));
         assertFalse(threshold.isViolated(250));
@@ -42,7 +42,7 @@ class ThresholdTest {
 
     @Test
     void testViolation_SimpleNumber_InsideNotViolated() {
-        Threshold threshold = Threshold.parse("100", NaemonStatus.WARNING);
+        Threshold threshold = Threshold.parse("100", NaemonStatus.WARNING, false);
         
         assertFalse(threshold.isViolated(0));
         assertFalse(threshold.isViolated(50));
@@ -51,7 +51,7 @@ class ThresholdTest {
 
     @Test
     void testViolation_SimpleNumber_OutsideViolates() {
-        Threshold threshold = Threshold.parse("100", NaemonStatus.WARNING);
+        Threshold threshold = Threshold.parse("100", NaemonStatus.WARNING, false);
         
         assertTrue(threshold.isViolated(-1));
         assertTrue(threshold.isViolated(101));
@@ -59,7 +59,7 @@ class ThresholdTest {
 
     @Test
     void testViolation_NegativeInfinity_InsideNotViolated() {
-        Threshold threshold = Threshold.parse("~:100", NaemonStatus.WARNING);
+        Threshold threshold = Threshold.parse("~:100", NaemonStatus.WARNING, false);
         
         assertFalse(threshold.isViolated(50));
         assertFalse(threshold.isViolated(100));
@@ -68,7 +68,7 @@ class ThresholdTest {
 
     @Test
     void testViolation_PositiveInfinity_InsideNotViolated() {
-        Threshold threshold = Threshold.parse("100:~", NaemonStatus.WARNING);
+        Threshold threshold = Threshold.parse("100:~", NaemonStatus.WARNING, false);
         
         assertTrue(threshold.isViolated(50));
         assertFalse(threshold.isViolated(100));
@@ -77,8 +77,8 @@ class ThresholdTest {
 
     @Test
     void testWarningAndCriticalThresholds() {
-        Threshold warning = Threshold.parse("100:200", NaemonStatus.WARNING);
-        Threshold critical = Threshold.parse("200:300", NaemonStatus.CRITICAL);
+        Threshold warning = Threshold.parse("100:200", NaemonStatus.WARNING, false);
+        Threshold critical = Threshold.parse("200:300", NaemonStatus.CRITICAL, false);
         
         // Value 50 is outside both ranges
         assertTrue(warning.isViolated(50));

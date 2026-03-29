@@ -14,10 +14,6 @@ record CheckerConfig(
     int rateWindowMultiplier,
     Threshold warningThreshold,
     Threshold criticalThreshold,
-    String warningRegex,
-    String criticalRegex,
-    boolean warningNegated,
-    boolean criticalNegated,
     String uom,
     double divisor
 ) {

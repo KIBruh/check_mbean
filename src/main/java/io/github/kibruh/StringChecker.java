@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class StringChecker implements Checker {
     private static final Logger logger = Logger.getLogger(StringChecker.class.getName());
@@ -29,34 +27,11 @@ public class StringChecker implements Checker {
 
             String value = String.valueOf(valueOpt.get());
 
-            boolean criticalMatch = false;
-            boolean warningMatch = false;
-
-            if (config.criticalRegex() != null && !config.criticalRegex().isEmpty()) {
-                try {
-                    boolean matched = Pattern.compile(config.criticalRegex()).matcher(value).find();
-                    criticalMatch = config.criticalNegated() ? !matched : matched;
-                } catch (PatternSyntaxException e) {
-                    return NaemonOutput.unknown("Invalid critical regex: " + e.getMessage());
-                }
-            }
-
-            if (config.warningRegex() != null && !config.warningRegex().isEmpty()) {
-                try {
-                    boolean matched = Pattern.compile(config.warningRegex()).matcher(value).find();
-                    warningMatch = config.warningNegated() ? !matched : matched;
-                } catch (PatternSyntaxException e) {
-                    return NaemonOutput.unknown("Invalid warning regex: " + e.getMessage());
-                }
-            }
-
-            NaemonStatus status;
-            if (criticalMatch) {
+            NaemonStatus status = NaemonStatus.OK;
+            if (config.criticalThreshold() != null && config.criticalThreshold().isViolated(value)) {
                 status = NaemonStatus.CRITICAL;
-            } else if (warningMatch) {
+            } else if (config.warningThreshold() != null && config.warningThreshold().isViolated(value)) {
                 status = NaemonStatus.WARNING;
-            } else {
-                status = NaemonStatus.OK;
             }
 
             String attributeLabel = config.attribute() + (config.path() != null ? "." + config.path() : "");

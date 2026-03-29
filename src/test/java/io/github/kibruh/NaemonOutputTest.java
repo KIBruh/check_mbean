@@ -66,8 +66,8 @@ class NaemonOutputTest {
 
     @Test
     void testPerfDataWithThresholds() {
-        Threshold warn = Threshold.parse("10:50", NaemonStatus.WARNING);
-        Threshold crit = Threshold.parse("50:100", NaemonStatus.CRITICAL);
+        Threshold warn = Threshold.parse("10:50", NaemonStatus.WARNING, false);
+        Threshold crit = Threshold.parse("50:100", NaemonStatus.CRITICAL, false);
         
         NaemonOutput output = new NaemonOutput(NaemonStatus.OK, "Value is 25");
         output.addPerfData("myvalue", 25, "", warn, crit);
@@ -78,8 +78,8 @@ class NaemonOutputTest {
 
     @Test
     void testPerfDataWithInvertedThresholds() {
-        Threshold warn = Threshold.parse("@10:50", NaemonStatus.WARNING);
-        Threshold crit = Threshold.parse("@50:100", NaemonStatus.CRITICAL);
+        Threshold warn = Threshold.parse("@10:50", NaemonStatus.WARNING, false);
+        Threshold crit = Threshold.parse("@50:100", NaemonStatus.CRITICAL, false);
         
         NaemonOutput output = new NaemonOutput(NaemonStatus.OK, "Value is 25");
         output.addPerfData("myvalue", 25, "", warn, crit);
