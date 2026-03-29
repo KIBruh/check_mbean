@@ -21,8 +21,9 @@ This file serves as the primary instructional context for Gemini CLI interaction
     - **`rate`**: Calculates per-minute rates from counter attributes using stateful history.
     - **`string`**: Performs regex-based matching on string attributes.
     - **`fetch`**: Simple raw value retrieval (non-Nagios mode).
-- **Threshold Engine**: Custom implementation of Naemon/Nagios range specifications (`[@]start:end`).
+- **Threshold Engine**: Unified `Threshold` interface with support for numeric ranges (`NumericThreshold`) and regex patterns (`StringThreshold`).
 - **JMX Layer**: Abstracted through `JmxClient` for testability.
+- **Formatting**: Centralized `FormatUtils` for Naemon-compliant numeric output.
 
 ## Building and Running
 

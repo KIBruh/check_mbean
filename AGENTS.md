@@ -57,7 +57,7 @@ Adherence to these rules is enforced via Checkstyle (`checkstyle.xml`).
 - **Grouping:** static first, then java.*, then others (alphabetic order within groups)
 
 ### Types & Error Handling
-- **Records:** Use for immutable data (e.g., `CheckerConfig`, `Range`, `Threshold`)
+- **Records:** Use for immutable data (e.g., `CheckerConfig`, `Range`, `NumericThreshold`, `StringThreshold`)
 - **Optional:** Use `Optional<T>` for return types that may be empty; avoid returning nulls
 - **Exceptions:** Use checked exceptions for recoverable errors; unchecked for programming errors
 - **Logging:** Use `java.util.logging`. Log level defaults to `SEVERE`
@@ -74,6 +74,7 @@ Adherence to these rules is enforced via Checkstyle (`checkstyle.xml`).
 - **`CliParser`**: Handles Apache Commons CLI (long-options only)
 - **`JmxClient`**: Manages MBeanServerConnection lifecycle
 - **`Checker` Interface**: Implemented by `GaugeChecker`, `RateChecker`, and `StringChecker`
+- **`Threshold` Interface**: Unified threshold evaluation, implemented by `NumericThreshold` (range-based) and `StringThreshold` (regex-based)
 - **`NaemonOutput`**: Formats status messages and performance data
 
 ### Performance Data & Numeric Formatting
