@@ -62,8 +62,6 @@
                             <buildArgs>
                                 <buildArg>--enable-monitoring=jmxclient</buildArg>
                                 <buildArg>--no-fallback</buildArg>
-                                <buildArg>--future-defaults=all</buildArg>
-                                <buildArg>-Xmx4g</buildArg>
                             </buildArgs>
                         </configuration>
                     </plugin>
