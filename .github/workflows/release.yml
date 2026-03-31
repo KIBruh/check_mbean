@@ -9,7 +9,7 @@ jobs:
   release:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -29,7 +29,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       - name: Build Release Artifacts (Unix)
-        if: runner.os != 'Windows'
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then
             mvn -B -Pnative package -Dnative-image.buildArgs="--static --libc=musl"
@@ -37,19 +36,8 @@ jobs:
             mvn -B -Pnative package
           fi
 
-      - name: Build Release Artifacts (Windows PowerShell)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          mvn -B -Pnative package
-
       - name: Rename Native Binary (Unix)
-        if: runner.os != 'Windows'
         run: mv target/check_mbean target/check_mbean-${{ runner.os }}-${{ runner.arch }}
-
-      - name: Rename Native Binary (Windows)
-        if: runner.os == 'Windows'
-        run: move target\check_mbean.exe target\check_mbean-Windows-${{ runner.arch }}.exe
 
       - name: Create Release (Linux)
         if: matrix.os == 'ubuntu-latest'
