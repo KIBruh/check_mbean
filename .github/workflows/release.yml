@@ -28,13 +28,20 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
-      - name: Build Release Artifacts
+      - name: Build Release Artifacts (Unix)
+        if: runner.os != 'Windows'
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then
             mvn -B -Pnative package -Dnative-image.buildArgs="--static --libc=musl"
           else
             mvn -B -Pnative package
           fi
+
+      - name: Build Release Artifacts (Windows PowerShell)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          mvn -B -Pnative package
 
       - name: Rename Native Binary (Unix)
         if: runner.os != 'Windows'
